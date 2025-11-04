@@ -250,8 +250,10 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
   	ocsv.open(csvname);
   	ocsv << "evtidx ";
 	ocsv<<"jetidx ";
-	ocsv<<"subclidx ";
-	ocsv<<_subobjBranchName<<" ";
+	if(_nsubobj != nullptr){
+		ocsv<<"subclidx ";
+		ocsv<<_subobjBranchName<<" ";
+	}
 	//object observables
 	//idx mapping abstraction
 	for(strIdxMap::iterator iter = _idxMaps.begin(); iter != _idxMaps.end(); ++iter)
@@ -275,22 +277,24 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 		//write the csv headers
 		ocsv << branchList[i] << " ";
 	}
-	//subobject observables
-	for(strIdxMap::iterator iter = _idxSubMaps.begin(); iter != _idxSubMaps.end(); ++iter)
-	{
-	  std::string key =  iter->first;
-	  std::cout<<"found submapping: "<<key<<" "<<_idxSubMaps[key].first<<":"<<_idxSubMaps[key].second<<"\n"; 
-	  ocsv<<key<<" ";		
-	}
-	
 	std::vector< std::vector<std::vector<double>>* > subBranchVec(subBranchList.size(), 0);
-	for(int i=0; i<subBranchList.size(); i++){
-		//set dynamic addresses
-		std::cout<<"setting subBranch address of: "<< subBranchList[i]<<"\n";
-		_ttree->SetBranchAddress(subBranchList[i].c_str(),&subBranchVec[i]);
-		//write the csv headers
-		ocsv << subBranchList[i];
-		if(i < subBranchList.size()-1) ocsv << " ";
+	if(_nsubobj != nullptr){
+		//subobject observables
+		for(strIdxMap::iterator iter = _idxSubMaps.begin(); iter != _idxSubMaps.end(); ++iter)
+		{
+		  std::string key =  iter->first;
+		  std::cout<<"found submapping: "<<key<<" "<<_idxSubMaps[key].first<<":"<<_idxSubMaps[key].second<<"\n"; 
+		  ocsv<<key<<" ";		
+		}
+		
+		for(int i=0; i<subBranchList.size(); i++){
+			//set dynamic addresses
+			std::cout<<"setting subBranch address of: "<< subBranchList[i]<<"\n";
+			_ttree->SetBranchAddress(subBranchList[i].c_str(),&subBranchVec[i]);
+			//write the csv headers
+			ocsv << subBranchList[i];
+			if(i < subBranchList.size()-1) ocsv << " ";
+		}
 	}
 	ocsv << "\n";
 	
@@ -305,53 +309,73 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 		//how many objects to flatten? grab the first one on the list
 		dim = (branchVec[0])->size();
 		//debug print
-		std::cout<<"found # objs "<<dim<<"\n";
+		//std::cout<<"found # objs "<<dim<<"\n";
 		//unroll the vector
 		for(int j=0; j<dim; j++){
 			//unroll subcluster such that each subcluster is one row
 			if(_nsubobj == nullptr){
-				cout << "Error: set branch of number of subobjects with SetNSubBranch(branchname)" << endl;
-				return;
-			}
-			//cout << "obj # " << j << " has # subobjs " << _nsubobj->at(j) << endl;
-			for(int n = 0; n < _nsubobj->at(j); n++){
-				//cout << "subobj #" << n << endl;
+				//cout << "Error: set branch of number of subobjects with SetNSubBranch(branchname)" << endl;
+				//return;
+				//if newever versions extract the values from the idx mapping
 				//event index	
 				ocsv<<i<<" ";
 				//jet index
 				ocsv<<j<<" ";
-				//subcluster index
-				ocsv<<n<<" ";
-				ocsv<<_nsubobj->at(j)<<" ";
-				//if newever versions extract the values from the idx mapping
 				for(strIdxMap::iterator iter = _idxMaps.begin(); iter != _idxMaps.end(); ++iter)
 				{
 					//cout << iter->first << " "  << RetrieveMapValue( iter->first, j) << endl;
 					ocsv<< RetrieveMapValue( iter->first, j) << " ";
 				}
-		
 				//unroll objects	
 				for(int k=0; k<branchVec.size(); k++){
 					//debug print
-					std::cout<<branchList[k]<<" "<<branchVec[k]->at(j)<<" \n";
+					//std::cout<<branchList[k]<<" "<<branchVec[k]->at(j)<<" \n";
 					//write branch quantities and evtid
 					ocsv<<branchVec[k]->at(j)<<" "; 
 				}
-				//unroll subobjects
-				for(strIdxMap::iterator iter = _idxSubMaps.begin(); iter != _idxSubMaps.end(); ++iter)
-				{
-					//cout << iter->first << " "  << RetrieveSubMapValue( iter->first, j, n) << endl;
-					ocsv<< RetrieveSubMapValue( iter->first, j, n) << " ";
-				}
-				for(int k = 0; k < subBranchVec.size(); k++){
-					//debug print
-//cout << "subbranchvec size " << subBranchVec.size() << " subbranchvec # " << k << " size " << subBranchVec[k]->at(j).size() << endl;	
-					std::cout<<subBranchList[k]<<" "<<subBranchVec[k]->at(j).at(n)<<" \n";
-					//write subBranch quantities and evtid
-					ocsv<<subBranchVec[k]->at(j).at(n); 
-					if(k < subBranchVec.size()-1) ocsv << " ";
-				}
 				ocsv<<"\n";
+			}
+			else{
+			//cout << "obj # " << j << " has # subobjs " << _nsubobj->at(j) << endl;
+				for(int n = 0; n < _nsubobj->at(j); n++){
+					//cout << "subobj #" << n << endl;
+					//event index	
+					ocsv<<i<<" ";
+					//jet index
+					ocsv<<j<<" ";
+					//subcluster index
+					ocsv<<n<<" ";
+					ocsv<<_nsubobj->at(j)<<" ";
+					//if newever versions extract the values from the idx mapping
+					for(strIdxMap::iterator iter = _idxMaps.begin(); iter != _idxMaps.end(); ++iter)
+					{
+						//cout << iter->first << " "  << RetrieveMapValue( iter->first, j) << endl;
+						ocsv<< RetrieveMapValue( iter->first, j) << " ";
+					}
+		
+					//unroll objects	
+					for(int k=0; k<branchVec.size(); k++){
+						//debug print
+						//std::cout<<branchList[k]<<" "<<branchVec[k]->at(j)<<" \n";
+						//write branch quantities and evtid
+						ocsv<<branchVec[k]->at(j)<<" "; 
+					}
+					//unroll subobjects
+					for(strIdxMap::iterator iter = _idxSubMaps.begin(); iter != _idxSubMaps.end(); ++iter)
+					{
+						//cout << iter->first << " "  << RetrieveSubMapValue( iter->first, j, n) << endl;
+						ocsv<< RetrieveSubMapValue( iter->first, j, n) << " ";
+					}
+					for(int k = 0; k < subBranchVec.size(); k++){
+						//debug print
+//cout << "subbranchvec 	size " << subBranchVec.size() << " subbranchvec # " << k << " size " << subBranchVec[k]->at(j).size() << endl;	
+						//std::cout<<subBranchList[k]<<" "<<subBranchVec[k]->at(j).at(n)<<" \n";
+						//write subBranch quantities and evtid
+						ocsv<<subBranchVec[k]->at(j).at(n); 
+						if(k < subBranchVec.size()-1) ocsv << " ";
+					}
+					ocsv<<"\n";
+				}
 			}	
 		}
 			
