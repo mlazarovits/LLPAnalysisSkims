@@ -30,7 +30,7 @@ class TTreeInterface{
 	std::set<std::string> _idxSet{}; //set of idx branches
 	std::set<std::string> _brSet{}; //set of target branches
 
-	std::string _subobjBranchName;
+	std::string _subobjBranchName = "";
 	
 	//index chasing var
 	strIdxMap _idxMaps{};//stores name associations, keep names around for debug and printing
@@ -61,6 +61,8 @@ class TTreeInterface{
 	void CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname );
 	void CreateFlattenedCSV( std::vector<std::string> branchList, std::string csvname);
 	
+	void SetSkipBranches(const map<string, double>& skipbranches);
+	map<string, double> _skipBranch;
 		
 };
 TTreeInterface::TTreeInterface(std::string fileName, std::string treeName){
@@ -239,12 +241,19 @@ void TTreeInterface::SetNSubBranch( std::string branchname){
 	_subobjBranchName = branchname;
 }
 
+void TTreeInterface::SetSkipBranches(const map<string, double>& skipbranches){
+	_skipBranch.clear();
+	_skipBranch = skipbranches;
+}
+
 
 void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname ){
 	// loop over selected branches
 	// expect vector of primitive types and flatten
 	// also record a relative event ID
-	
+
+	double evt;	
+	_ttree->SetBranchAddress("evt",&evt);
 	//prepare space delimited csv file output
 	std::ofstream ocsv;
   	ocsv.open(csvname);
@@ -266,17 +275,24 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 
 
 
+	//do for nsubbranch if specified
+	if(_subobjBranchName != ""){
+		branchList.push_back(_subobjBranchName);
+	}
 	//create variables for ttree to load into
 	std::vector< std::vector<double>* > branchVec(branchList.size(), 0);
 	for(int i=0; i<branchList.size(); i++){
-
 		//set dynamic addresses
 		std::cout<<"setting branch address of: "<< branchList[i]<<"\n";
-		_ttree->SetBranchAddress(branchList[i].c_str(),&branchVec[i]);
-		
+		if(branchList[i] == _subobjBranchName){
+			branchVec[i] = _nsubobj;
+		}
+		else
+			_ttree->SetBranchAddress(branchList[i].c_str(),&branchVec[i]);
 		//write the csv headers
 		ocsv << branchList[i] << " ";
 	}
+
 	std::vector< std::vector<std::vector<double>>* > subBranchVec(subBranchList.size(), 0);
 	if(_nsubobj != nullptr){
 		//subobject observables
@@ -297,22 +313,41 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 		}
 	}
 	ocsv << "\n";
+
+	for(auto it = _skipBranch.begin(); it != _skipBranch.end(); it++){
+		cout << "skipping objects with " << it->first << " == " << it->second << endl;
+	}
 	
 	Long64_t nentries = _ttree->GetEntries();
 	std::cout<<"Looping over "<<nentries<<" events\n";
 	int dim;
 	for(Long64_t i=0; i< nentries; i++){
-		//cout << "evt " << i << endl;
 		_ttree->GetEntry(i);
+		//cout << "evt " << i << " ttree evt " << evt << endl;
 			
 		
 		//how many objects to flatten? grab the first one on the list
 		dim = (branchVec[0])->size();
 		//debug print
-		//std::cout<<"found # objs "<<dim<<"\n";
+		//std::cout<<"found # objs "<<dim<< " from " << branchList[0] << " branch" << " skipBranch has " << branchVec[4]->size() << " objs" << endl;
 		//unroll the vector
 		for(int j=0; j<dim; j++){
-			//unroll subcluster such that each subcluster is one row
+			//cout << "obj # " << j << " has # subobjs " << _nsubobj->at(j) << endl;
+			//do skipbranch selection
+			bool skip = false;
+			for(auto it = _skipBranch.begin(); it != _skipBranch.end(); it++){
+//cout << "skipbranch " << it->first << endl;
+				auto iit = find(branchList.begin(), branchList.end(), it->first);
+				if(iit == branchList.end()) continue;
+				//get index for branchvec
+				int idx = distance(branchList.begin(), iit);
+//cout << "j " << j << " branchvec idx " << idx << " branchvec size " << branchVec[idx]->size() << " branchlist[idx] " << branchList[idx] << endl;
+//cout << "branchvec[idx]->at(j) " << branchVec[idx]->at(j) << endl;
+				if(branchVec[idx]->at(j) == it->second){
+					skip = true;
+				}
+			}
+			if(skip) continue;
 			if(_nsubobj == nullptr){
 				//cout << "Error: set branch of number of subobjects with SetNSubBranch(branchname)" << endl;
 				//return;
@@ -337,6 +372,11 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 			}
 			else{
 			//cout << "obj # " << j << " has # subobjs " << _nsubobj->at(j) << endl;
+			//TODO - debug in RunClustering and remove when fixed 
+			if(subBranchVec[0]->at(j).size() != _nsubobj->at(j)){
+				//cout << "_nsubobj " << _nsubobj->at(j) << " size from subbranchvec[0] " << subBranchVec[0]->at(j).size() << endl;
+				continue;
+			}
 				for(int n = 0; n < _nsubobj->at(j); n++){
 					//cout << "subobj #" << n << endl;
 					//event index	
@@ -368,7 +408,7 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 					}
 					for(int k = 0; k < subBranchVec.size(); k++){
 						//debug print
-//cout << "subbranchvec 	size " << subBranchVec.size() << " subbranchvec # " << k << " size " << subBranchVec[k]->at(j).size() << endl;	
+//cout << "subbranchvec " << subBranchList[k] << " size " << subBranchVec[k]->size() << " j " << j << " size " << subBranchVec[k]->at(j).size() << endl;	
 						//std::cout<<subBranchList[k]<<" "<<subBranchVec[k]->at(j).at(n)<<" \n";
 						//write subBranch quantities and evtid
 						ocsv<<subBranchVec[k]->at(j).at(n); 
