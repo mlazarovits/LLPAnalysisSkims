@@ -59,6 +59,7 @@ class TTreeInterface{
 	
 	//make a flattened csv
 	void CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname );
+	void CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname, std::vector<string> evtbranchlist = {} );
 	void CreateFlattenedCSV( std::vector<std::string> branchList, std::string csvname);
 	
 	void SetSkipBranches(const map<string, double>& skipbranches);
@@ -247,7 +248,7 @@ void TTreeInterface::SetSkipBranches(const map<string, double>& skipbranches){
 }
 
 
-void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname ){
+void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname, std::vector<string> evtbranchlist = {} ){
 	// loop over selected branches
 	// expect vector of primitive types and flatten
 	// also record a relative event ID
@@ -262,6 +263,13 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 	if(_nsubobj != nullptr){
 		ocsv<<"subclidx ";
 		ocsv<<_subobjBranchName<<" ";
+	}
+	//evt observables
+	std::vector<double> evtobs(evtbranchlist.size(),0);
+	for(int i = 0; i < evtbranchlist.size(); i++){
+		ocsv << evtbranchlist[i]<<" ";
+		std::cout<<"setting branch address of: "<< evtbranchlist[i]<<"\n";
+		_ttree->SetBranchAddress(evtbranchlist[i].c_str(),&(evtobs[i]));
 	}
 	//object observables
 	//idx mapping abstraction
@@ -324,6 +332,9 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 	for(Long64_t i=0; i< nentries; i++){
 		_ttree->GetEntry(i);
 		//cout << "evt " << i << " ttree evt " << evt << endl;
+		//do event observables
+		for(int o = 0; o < evtobs.size(); o++)
+			ocsv<<evtobs[o]<<" ";		
 			
 		
 		//how many objects to flatten? grab the first one on the list
