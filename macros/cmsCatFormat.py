@@ -3,17 +3,24 @@ from matplotlib.colors import LogNorm
 import mplhep as hep
 import ROOT
 import uproot
+import argparse
+import os
 import warnings
 warnings.filterwarnings("ignore", message="The value of the smallest subnormal.*") #suppress warning about 0 being the smallest subnormal number (not relevant for plotting)
 
-def get_plots_from_file(file_name, hists):
+def get_plots_from_file_TFile(file_name, hists):
     infile = ROOT.TFile.Open(file_name)
     histos = [infile.Get(hist) for hist in hists]
     return histos
 
 
-def make_plot(inhist, inhist_name):
-    fig, ax = plt.subplots()
+def get_plots_from_file(file_name, hists):
+    infile = uproot.open(file_name)
+    histos = [infile[hist].to_hist() for hist in hists]
+    return histos
+
+def make_plot_2d(inhist, inhist_name, pathname):
+    fig, ax = plt.subplots(figsize=(12,10))
     inhist.plot2d(ax = ax, cbarextend = True, norm=LogNorm(), rasterized=True) #rasterized option reduces visual gaps between bins
     fig.get_axes()[0].set_ylabel('eta', fontsize=20) #yaxis
     fig.get_axes()[0].set_xlabel('time [ns]', fontsize=20) #xaxis
@@ -21,27 +28,37 @@ def make_plot(inhist, inhist_name):
     
     hep.cms.label(llabel="Preliminary",rlabel="(13 TeV)")
     
-    plottitle = inhist_name+".pdf"
+    plottitle = pathname+"/"+inhist_name+".pdf"
     print("Saving histogram",plottitle)
     fig.savefig(plottitle)
 
 def main():
-    #hep.style.use("CMS")
-    plt.style.use(hep.style.CMS)
+    hep.style.use("CMS")
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
     
-    hists_to_plot = ["SC_TimeCenter_EtaCenter","SC_TimeCenter_EtaCenter_BHFilter"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--inputFile",'-i',help='input file with histograms to be formatted',required=True)
+    parser.add_argument("--hists1D",help='1D hists to format',nargs="+",default=[])
+    parser.add_argument("--hists2D",help='2D hists to format',nargs="+",default=[])
+    args = parser.parse_args()
 
-    file_name = "plots/condor_superclusters_defaultv8_beta0-1e-5_m0-0p0-0p0-0p0_W0diag-0p013-0p013-33p333_nu0-3_NperGeV-0p0333333_emAlpha-1e-5_MET_R22_AL1NpSC_v31_MET_detbkg.root"
+    if(len(args.hists1D) < 1 and len(args.hists2D) < 0):
+        print("No histograms specified.")
+        return
 
-    hists = get_plots_from_file(file_name, hists_to_plot) 
+    pathname = os.path.basename(args.inputFile)
+    pathname = pathname[:pathname.rfind('.')]
+    pathname = "formatted_plots/"+pathname
+    if not os.path.exists(pathname):
+        os.mkdirs(pathname)
 
-    for h, hist in enumerate(hists):
-        infile = uproot.open(file_name)
-        hist_name = hists_to_plot[h]
-        hist = infile[hist_name]
-        hist = hist.to_hist()
-        make_plot(hist, hist_name)
+
+    #add formatting for 1d hists
+
+    hists2d = get_plots_from_file(args.inputFile, args.hists2D) 
+    for h, hist in enumerate(hists2d):
+        hist_name = args.hists2D[h]
+        make_plot_2d(hist, hist_name, pathname)
 
 
 if __name__ == "__main__":
