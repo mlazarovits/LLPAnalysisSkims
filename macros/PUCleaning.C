@@ -95,6 +95,14 @@ void PUCleaning(string file, bool recreatecsv = true){
 	auto hist2d_relPhiVar_relE = filtered_df5.Histo2D({"SC_subclRelPhiVar_subclRelEnergy","SC_subclRelPhiVar_subclRelEnergy;subclRelPhiVar;subclRelEnergy;a.u.",100,0,10.2,100,0,1.2},"subclRelPhiVar","subclRelEnergy");
 	//subcluster relative energy vs geo avg of relative variances for jets matched to relevant gen particles (ie W for single W, top for boostTop, etc) 
 	hists2d.push_back(hist2d_relPhiVar_relE);
+
+	auto hist2d_relEtaVar_relTimeVar = filtered_df5.Histo2D({"SC_subclRelEtaVar_subclRelTimeVar","SC_subclRelEtaVar_subclRelTimeVar;subclRelEtaVar;subclRelTimeVar;a.u.",100,0,3.,100,0,3.},"subclRelEtaVar","subclRelTimeVar");
+	hists2d.push_back(hist2d_relEtaVar_relTimeVar);
+
+	auto hist2d_relPhiVar_relTimeVar = filtered_df5.Histo2D({"SC_subclRelPhiVar_subclRelTimeVar","SC_subclRelPhiVar_subclRelTimeVar;subclRelPhiVar;subclRelTimeVar;a.u.",100,0,3.,100,0,3.},"subclRelPhiVar","subclRelTimeVar");
+	hists2d.push_back(hist2d_relPhiVar_relTimeVar);
+
+
 	
 	//filted filtered_df5p5 based on # of starting subclusters and ending subclusters
 	auto df_2to1 = filtered_df5p5.Filter("SC_nSubclusters_prePUcleaning == 2 && SC_nSubclusters == 1","2to1");
@@ -106,12 +114,12 @@ void PUCleaning(string file, bool recreatecsv = true){
 	auto filtered_df6 = filtered_df5p5.Filter(pucut,"pu_cleaning_cut");
 
 	string ofilename = csvname_base+"_pucleaning.root";
-	cout << "Writing output to " << ofilename << endl;
 	TFile* ofile = new TFile(ofilename.c_str(),"RECREATE");
 	ofile->cd();
 	for(auto hist : hists1d) hist->Write();
 	for(auto hist : hists2d) hist->Write();
 	ofile->Close();
 	df.Report()->Print();
+	cout << "Writing output to " << ofilename << endl;
 
 }

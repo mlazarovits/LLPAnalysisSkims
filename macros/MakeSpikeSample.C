@@ -33,7 +33,10 @@ void MakeSpikeSample(){
 	tree->SetBranchAddress("SC_isoPresel", &isopresel);
 
 
-	string csvname = "MET_R18_AL1NpSC_DEOnly_v31_MET_AOD_Run2018B-15Feb2022_UL2018-v1_superclusters_defaultv8p2_beta0-1e-5_m0-0p0-0p0-0p0_W0diag-0p013-0p013-33p333_nu0-3_NperGeV-0p0333333_emAlpha-1e-5_spikesOnly.csv";	
+	string csvname = file;
+	csvname = csvname.substr(csvname.find("/")+1);
+	csvname = csvname.substr(0,csvname.find(".root"));
+	csvname = "csv/"+csvname+"_spikeOnly.csv";
 
 	std::ofstream ocsv;
   	ocsv.open(csvname);
