@@ -397,6 +397,8 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 					//subcluster index
 					ocsv<<n<<" ";
 					ocsv<<_nsubobj->at(j)<<" ";
+					for(int o = 0; o < evtobs.size(); o++)
+						ocsv<<evtobs[o]<<" ";		
 					//if newever versions extract the values from the idx mapping
 					for(strIdxMap::iterator iter = _idxMaps.begin(); iter != _idxMaps.end(); ++iter)
 					{
@@ -422,8 +424,7 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 //cout << "subbranchvec " << subBranchList[k] << " size " << subBranchVec[k]->size() << " j " << j << " size " << subBranchVec[k]->at(j).size() << endl;	
 						//std::cout<<subBranchList[k]<<" "<<subBranchVec[k]->at(j).at(n)<<" \n";
 						//write subBranch quantities and evtid
-						ocsv<<subBranchVec[k]->at(j).at(n); 
-						if(k < subBranchVec.size()-1) ocsv << " ";
+						ocsv<<subBranchVec[k]->at(j).at(n) << " "; 
 					}
 					ocsv<<"\n";
 				}
