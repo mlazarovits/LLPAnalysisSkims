@@ -9,7 +9,7 @@ void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra
 		return;
 	}
 
-	bool rhmaps = false;
+	bool rhmaps = true;
 	string physbkgLabel = "SC_trueLabel == 1";
 	//string physbkgLabel = "SC_seedTime > -0.5 && SC_seedTime < 0.5 && SC_isoPresel == 1 && SC_seedTimeSignificance < 1 && SC_seedTimeSignificance > -1 && SC_dR_track > 0.03";
 	string bhLabel = "SC_trueLabel == 2";
@@ -82,6 +82,7 @@ void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra
 	vector<ROOT::RDF::RResultPtr<TH2D>> hists2d;
 
 	string predBH = "SC_predScore_BH > 0.67";
+	string earlytimes = "SC_TimeCenter < -2";
 	if(rhmaps){	
 		auto truelab1_map = df.Filter(physbkgLabel).Histo2D({"physBkgMap_true","physBkgMap_true;rh_ieta;rh_iphi;energy",7,-3,4,7,-3,4}, "rh_iEta","rh_iPhi","rh_energy");
 		hists2d.push_back(truelab1_map);
@@ -100,8 +101,10 @@ void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra
 		string spike_thresh = "0.65";	
 		auto predlab3_map = df.Filter("SC_predScore_spike > "+spike_thresh).Histo2D({"spikeMap_pred","spikeMap_pred;rh_ieta;rh_iphi;energy",7,-3,4,7,-3,4}, "rh_iEta","rh_iPhi","rh_energy");
 		hists2d.push_back(predlab3_map);
+		
+		auto predlab2early_map = df.Filter(predBH+" && "+earlytimes).Histo2D({"beamHaloMap_predEarly","beamHaloMap_predEarly;rh_ieta;rh_iphi;energy",7,-3,4,7,-3,4}, "rh_iEta","rh_iPhi","rh_energy");
+		hists2d.push_back(predlab2early_map);
 	}
-
 
 	auto dfphi = df.Define("SC_PhiSig","sqrt(SC_PhiVar)");
 	auto df0 = dfphi.Define("SC_EtaSig","sqrt(SC_EtaVar)");
