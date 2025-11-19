@@ -397,6 +397,8 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 					//subcluster index
 					ocsv<<n<<" ";
 					ocsv<<_nsubobj->at(j)<<" ";
+					for(int o = 0; o < evtobs.size(); o++)
+						ocsv<<evtobs[o]<<" ";		
 					//if newever versions extract the values from the idx mapping
 					for(strIdxMap::iterator iter = _idxMaps.begin(); iter != _idxMaps.end(); ++iter)
 					{
