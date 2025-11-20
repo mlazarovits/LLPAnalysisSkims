@@ -2,18 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import mplhep as hep
-import ROOT
 import uproot
 import argparse
 import os
 import warnings
 warnings.filterwarnings("ignore", message="The value of the smallest subnormal.*") #suppress warning about 0 being the smallest subnormal number (not relevant for plotting)
-
-def get_plots_from_file_TFile(file_name, hists):
-    infile = ROOT.TFile.Open(file_name)
-    histos = [infile.Get(hist) for hist in hists]
-    return histos
-
 
 def get_2d_plots_from_file(file_name, hists):
     infile = uproot.open(file_name)
@@ -70,9 +63,9 @@ def make_plot_1d(inhist, inhist_name, pathname, xlab, ylab, log, wide):
     if log:
         ax.set_yscale('log')
     inhist.plot(ax = ax)
-    fig.get_axes()[0].set_ylabel(ylab, fontsize=20) #yaxis
-    fig.get_axes()[0].set_xlabel(xlab, fontsize=20) #xaxis
-    
+    ax.set_ylabel(ylab, fontsize=20) #yaxis
+    ax.set_xlabel(xlab, fontsize=20) #xaxis
+ 
     hep.cms.label(llabel="Preliminary",rlabel="(13 TeV)")
     
     plottitle = pathname+"/"+inhist_name+".pdf"
@@ -81,7 +74,6 @@ def make_plot_1d(inhist, inhist_name, pathname, xlab, ylab, log, wide):
 
 def main():
     hep.style.use("CMS")
-    ROOT.gROOT.SetBatch(ROOT.kTRUE)
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--inputFile",'-i',help='input file with histograms to be formatted',required=True)
@@ -115,6 +107,9 @@ def main():
         if "map" in hist_name or "Map" in hist_name:
             xlab = "local ieta"
             ylab = "local iphi"
+        if "subclRelGeoAvgVar_subclRelEnergy" in hist_name:
+        	xlab = r"$\sqrt[3]{ \tilde{\sigma}^2_{time} \times \tilde{\sigma}^2_{\eta} \times \tilde{\sigma}^2_{\phi}}$"
+        	ylab = r"$\tilde{E}$"
         log = False
         if args.log:
             log = True
