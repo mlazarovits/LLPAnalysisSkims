@@ -3,45 +3,38 @@
 #include <ROOT/RVec.hxx>
 #include "TTreeInterface.h"
 
-void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra = ""){
+void DetBkgAnalysis(string file, string tag = "CMS", bool recreatecsv = false, string ofilename_extra = ""){
 	if(gSystem->AccessPathName(file.c_str())){
 		cout << "File " << file << " does not exist." << endl;
 		return;
 	}
 
-	bool rhmaps = true;
-	string physbkgLabel = "SC_trueLabel == 1";
-	//string physbkgLabel = "SC_seedTime > -0.5 && SC_seedTime < 0.5 && SC_isoPresel == 1 && SC_seedTimeSignificance < 1 && SC_seedTimeSignificance > -1 && SC_dR_track > 0.03";
-	string bhLabel = "SC_trueLabel == 2";
-	string phicut = "0.1";
-	//string bhLabel = "SC_isoPresel == 1 && SC_dR_track > 0.03 && SC_seedTime > -7 && SC_seedTime <= -2 && SC_seedTimeSignificance < -3 && (SC_PhiCenter < "+phicut+" || (acos(-1) - "+phicut+" < SC_PhiCenter && SC_PhiCenter < acos(-1) + "+phicut+") || 2*acos(-1) - "+phicut+" < SC_PhiCenter )";
-	//string bhLabel_old = "SC_isoPresel == 1 && SC_dR_track > 0.03 && SC_TimeCenter > -7 && SC_seedTime <= -2 && (SC_PhiCenter < "+phicut+" || (acos(-1) - "+phicut+" < SC_PhiCenter && SC_PhiCenter < acos(-1) + "+phicut+") || 2*acos(-1) - "+phicut+" < SC_PhiCenter )";
-	string bhLabel_old = bhLabel;
-	string spikeLabel = "SC_trueLabel == 3";
-	//string spikeLabel = "SC_isoPresel == 1 && SC_dR_track <= 0.02 && SC_seedTime <= -10 && SC_seedTime != -999 && SC_seedTimeSignificance < -3 && !(SC_PhiCenter < 0.3 || (acos(-1) - 0.3 < SC_PhiCenter && SC_PhiCenter < acos(-1) + 0.3) || 2*acos(-1) - 0.3 < SC_PhiCenter )";
+	//bool rhmaps = true;
+	string physbkgLabel = "SC_trueLabel_"+tag+" == 1";
+	string bhLabel = "SC_trueLabel_"+tag+" == 2";
+	string spikeLabel = "SC_trueLabel_"+tag+" == 3";
 
 	//rh maps	
 	TTreeInterface TI(file,"tree");
 	vector<string> branchlist;
-	branchlist.push_back("SC_trueLabel");
-	branchlist.push_back("SC_predScore_physBkg");
-	branchlist.push_back("SC_predScore_BH");
-	branchlist.push_back("SC_predScore_spike");
-	branchlist.push_back("SC_TimeCenter");
-	branchlist.push_back("SC_EtaCenter");
-	branchlist.push_back("SC_PhiCenter");
-	branchlist.push_back("SC_EtaVar");
-	branchlist.push_back("SC_PhiVar");
-	branchlist.push_back("SC_dR_trackSubcl");
-	branchlist.push_back("SC_EovP_trackSubcl");
-	//branchlist.push_back("SC_dR_track");
-	//branchlist.push_back("SC_EovP_track");
-	//branchlist.push_back("SC_seedTime");
-	//branchlist.push_back("SC_seedTimeSignificance");
-	//branchlist.push_back("SC_isoPresel");
-	//branchlist.push_back("SC_PassGJetsCR_Obj");
+	branchlist.push_back("SC_trueLabel_"+tag);
+	branchlist.push_back("SC_predScore_physBkg_"+tag);
+	branchlist.push_back("SC_predScore_BH_"+tag);
+	branchlist.push_back("SC_predScore_spike_"+tag);
+	branchlist.push_back("SC_TimeCenter_"+tag);
+	branchlist.push_back("SC_EtaCenter_"+tag);
+	branchlist.push_back("SC_PhiCenter_"+tag);
+	branchlist.push_back("SC_EtaVar_"+tag);
+	branchlist.push_back("SC_PhiVar_"+tag);
+	branchlist.push_back("SC_dR_track_"+tag);
+	branchlist.push_back("SC_EovP_track_"+tag);
+	branchlist.push_back("SC_seedTime_"+tag);
+	branchlist.push_back("SC_seedTimeSignificance_"+tag);
+	branchlist.push_back("SC_isoPresel");
+	branchlist.push_back("SC_PassGJetsCR_Obj");
 
 	vector<string> subbranchlist;
+	/*
 	if(rhmaps){
 		TI.SetNSubBranch("SC_nRHs_grid");
 		subbranchlist.push_back("rh_iEta");
@@ -51,16 +44,23 @@ void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra
 		//subbranchlist.push_back("SC_rh_iPhi");
 		//subbranchlist.push_back("SC_rh_energy");
 	}
+	*/
 	
 	map<string, double> skipbranch;
 	//skipbranch["SC_isoPresel"] = 0;
-	//skipbranch["SC_trueLabel"] = -1;
+	//skipbranch["SC_trueLabel_"+tag] = -1;
+	skipbranch["SC_seedTime_"+tag] = -999;
 	TI.SetSkipBranches(skipbranch);
+
+	if(file.find("root://") != string::npos){ //extra parsing for eos file
+		string match = "root://cmseos.fnal.gov//store/user/malazaro/LLPMVA_TrainingSamples/";
+		file = file.substr(match.size());
+	}
 
 	string csvname_base = file;//"SCsUnrolled.csv";
 	csvname_base = csvname_base.substr(csvname_base.find("/")+1);
 	csvname_base = csvname_base.substr(0,csvname_base.find(".root"));
-	string csvname = "csv/"+csvname_base+"_SCsUnrolledRhs.csv";
+	string csvname = "csv/"+csvname_base+"_"+tag+"_SCsUnrolled.csv";
 	vector<string> evtbranchlist;
 	evtbranchlist.push_back("Flag_globalSuperTightHalo2016Filter");
 	if(gSystem->AccessPathName(csvname.c_str())){
@@ -81,8 +81,9 @@ void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra
 	vector<ROOT::RDF::RResultPtr<TH1D>> hists1d;
 	vector<ROOT::RDF::RResultPtr<TH2D>> hists2d;
 
-	string predBH = "SC_predScore_BH > 0.67";
-	string earlytimes = "SC_TimeCenter < -2";
+	string predBH = "SC_predScore_BH_"+tag+" > 0.67";
+	string earlytimes = "SC_TimeCenter_"+tag+" < -2";
+	/*
 	if(rhmaps){	
 		auto truelab1_map = df.Filter(physbkgLabel).Histo2D({"physBkgMap_true","physBkgMap_true;rh_ieta;rh_iphi;energy",7,-3,4,7,-3,4}, "rh_iEta","rh_iPhi","rh_energy");
 		hists2d.push_back(truelab1_map);
@@ -105,16 +106,41 @@ void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra
 		auto predlab2early_map = df.Filter(predBH+" && "+earlytimes).Histo2D({"beamHaloMap_predEarly","beamHaloMap_predEarly;rh_ieta;rh_iphi;energy",7,-3,4,7,-3,4}, "rh_iEta","rh_iPhi","rh_energy");
 		hists2d.push_back(predlab2early_map);
 	}
+	*/
 
-	auto dfphi = df.Define("SC_PhiSig","sqrt(SC_PhiVar)");
-	auto df0 = dfphi.Define("SC_EtaSig","sqrt(SC_EtaVar)");
-	//auto df0 = dfeta.Filter("SC_trueLabel != -1","inCR");
+	auto dfphi = df.Define("SC_PhiSig_"+tag,"sqrt(SC_PhiVar_"+tag+")");
+	auto dfeta = dfphi.Define("SC_EtaSig_"+tag,"sqrt(SC_EtaVar_"+tag+")");
+	auto df0 = dfeta.Filter("SC_EtaCenter_"+tag+" > -1.5 && SC_EtaCenter_"+tag+" < 1.5","barrelOnly");
 	auto df1 = df0.Filter(physbkgLabel,"physbkgCR");
 	auto df2 = df0.Filter(bhLabel,"bhCR");
 	auto df3 = df0.Filter(spikeLabel,"spikeCR");
-	auto df_bhOld = df0.Filter(bhLabel_old,"bhLabel_old");
 
 
+
+	auto h_nom_tc_ec = df0. 
+				Histo2D({("SC_seedTime_EtaCenter_"+tag).c_str(),("SC_seedTime_EtaCenter_"+tag+";seedTime;EtaCenter;a.u.").c_str(),50,-16,16,50,-1.6,1.6},"SC_seedTime_"+tag,"SC_EtaCenter_"+tag);
+	hists2d.push_back(h_nom_tc_ec);
+
+
+	//closure test
+	auto df_predBH = df0.Filter(predBH,"predictedBH");
+	auto h_time_eta_predBH = df_predBH. 
+				Histo2D({("SC_TimeCenter_EtaCenter_predBH_"+tag).c_str(),("SC_TimeCenter_EtaCenter_predBH_"+tag+";TimeCenter;EtaCenter;a.u.").c_str(),50,-16,16,50,-1.6,1.6},"SC_seedTime_"+tag,"SC_EtaCenter_"+tag);
+	hists2d.push_back(h_time_eta_predBH);
+	
+
+	auto df_notpredBH = df0.Filter("!("+predBH+")","!predictedBH");
+	auto h_time_eta_notpredBH = df_notpredBH. 
+				Histo2D({("SC_TimeCenter_EtaCenter_notpredBH_"+tag).c_str(),("SC_TimeCenter_EtaCenter_notpredBH_"+tag+";TimeCenter;EtaCenter;a.u.").c_str(),50,-16,16,50,-1.6,1.6},"SC_seedTime_"+tag,"SC_EtaCenter_"+tag);
+	hists2d.push_back(h_time_eta_notpredBH);
+
+
+	if(file.find("R22") != string::npos){ //filter broken in 2018 MET ntuples
+		auto h_bhfilter_tc_ec = df0.Filter("Flag_globalSuperTightHalo2016Filter == 1"). 
+					Histo2D({"SC_seedTime_EtaCenter_BHFilter","SC_seedTime_EtaCenter_BHFilter;seedTime;EtaCenter;a.u.",50,-16,16,50,-1.6,1.6},"SC_seedTime_"+tag,"SC_EtaCenter_"+tag);
+		hists2d.push_back(h_bhfilter_tc_ec);
+	}
+	/*
 	//bh filter testing
 	auto h_nom_tc_ec = df0. 
 				Histo2D({"SC_TimeCenter_EtaCenter","SC_TimeCenter_EtaCenter;TimeCenter;EtaCenter;a.u.",50,-16,16,50,-1.6,1.6},"SC_TimeCenter","SC_EtaCenter");
@@ -184,6 +210,8 @@ void DetBkgAnalysis(string file, bool recreatecsv = true, string ofilename_extra
 	auto h_time_eta_predBH = df_predBH. 
 				Histo2D({"SC_TimeCenter_EtaCenter_predBH","SC_TimeCenter_EtaCenter_predBH;TimeCenter;EtaCenter;a.u.",50,-16,16,50,-1.6,1.6},"SC_TimeCenter","SC_EtaCenter");
 	hists2d.push_back(h_time_eta_predBH);
+	*/
+
 
 	string ofilename = csvname_base+"_detbkg";
 	if(ofilename_extra != "") ofilename += "_"+ofilename_extra;
