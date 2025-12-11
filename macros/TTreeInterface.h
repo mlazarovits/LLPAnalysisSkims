@@ -258,11 +258,20 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 	//prepare space delimited csv file output
 	std::ofstream ocsv;
   	ocsv.open(csvname);
+
+	string objidx = "jetidx ";
+	string subobjidx = "subclidx ";
+
+	if(_subobjBranchName.find("_nRHs_") != string::npos){
+		objidx = "SCidx ";
+		subobjidx = "rhidx ";
+	}
+
   	ocsv << "evtidx ";
-	ocsv<<"jetidx ";
+	ocsv<<objidx;
 	if(_nsubobj != nullptr){
-		ocsv<<"subclidx ";
-		ocsv<<_subobjBranchName<<" ";
+		ocsv<<subobjidx;
+		//ocsv<<_subobjBranchName<<" ";
 	}
 	//evt observables
 	std::vector<double> evtobs(evtbranchlist.size(),0);
@@ -369,7 +378,7 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 					ocsv<<evtobs[o]<<" ";		
 				for(strIdxMap::iterator iter = _idxMaps.begin(); iter != _idxMaps.end(); ++iter)
 				{
-					//cout << iter->first << " "  << RetrieveMapValue( iter->first, j) << endl;
+					//std::cout << iter->first << " "  << RetrieveMapValue( iter->first, j) << endl;
 					ocsv<< RetrieveMapValue( iter->first, j) << " ";
 				}
 				//unroll objects	
@@ -396,7 +405,7 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 					ocsv<<j<<" ";
 					//subcluster index
 					ocsv<<n<<" ";
-					ocsv<<_nsubobj->at(j)<<" ";
+					//ocsv<<_nsubobj->at(j)<<" ";
 					for(int o = 0; o < evtobs.size(); o++)
 						ocsv<<evtobs[o]<<" ";		
 					//if newever versions extract the values from the idx mapping
