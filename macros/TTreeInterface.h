@@ -59,7 +59,7 @@ class TTreeInterface{
 	
 	//make a flattened csv
 	void CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname );
-	void CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname, std::vector<string> evtbranchlist);
+	void CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname, std::vector<string> evtbranchlist, int maxnevents = -1);
 	void CreateFlattenedCSV( std::vector<std::string> branchList, std::string csvname);
 	
 	void SetSkipBranches(const map<string, double>& skipbranches);
@@ -248,7 +248,7 @@ void TTreeInterface::SetSkipBranches(const map<string, double>& skipbranches){
 }
 
 
-void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname, std::vector<string> evtbranchlist){
+void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, std::vector<string> subBranchList, std::string csvname, std::vector<string> evtbranchlist, int maxnevents = -1){
 	// loop over selected branches
 	// expect vector of primitive types and flatten
 	// also record a relative event ID
@@ -334,8 +334,14 @@ void TTreeInterface::CreateFlattenedCSV( std::vector<std::string> branchList, st
 	for(auto it = _skipBranch.begin(); it != _skipBranch.end(); it++){
 		cout << "skipping objects with " << it->first << " == " << it->second << endl;
 	}
+
+
 	
-	Long64_t nentries = _ttree->GetEntries();
+	Long64_t nentries;
+	if(maxnevents == -1) 
+		nentries = _ttree->GetEntries();
+	else
+		nentries = (Long64_t)maxnevents;
 	std::cout<<"Looping over "<<nentries<<" events\n";
 	int dim;
 	for(Long64_t i=0; i< nentries; i++){
