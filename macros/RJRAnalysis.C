@@ -18,34 +18,69 @@ void MakeFileMap(){
 	string path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/";
 
 	procFiles["SMS"] = {};
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-1500_mN2-500_mN1-100_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1000_mN1-1_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1000_mN1-250_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1000_mN1-500_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-1000_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-1_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-250_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-500_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-1000_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-1500_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-1_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-250_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-500_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1000_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1500_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1900_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-250_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-500_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-500_mN1-1_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-500_mN1-250_ct0p1_rjrskim_v46.root");
-	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2500_mN2-1500_mN1-1000_ct0p1_rjrskim_v46.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-1000_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2150_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2150_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2150_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2150_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2200_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1000_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1500_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1500_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2300_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2300_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2350_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2350_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2350_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2350_ct0p5_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2400_ct0p1_rjrskim.root");
+	procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2400_ct0p5_rjrskim.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-1500_mN2-500_mN1-100_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1000_mN1-1_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1000_mN1-250_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1000_mN1-500_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-1000_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-1_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-250_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1500_mN1-500_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-1000_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-1500_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-1_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-250_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1900_mN1-500_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1000_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1500_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1900_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-1_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-250_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-1950_mN1-500_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-500_mN1-1_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-500_mN1-250_ct0p1_rjrskim_v46.root");
+	//procFiles.at("SMS").push_back(path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2500_mN2-1500_mN1-1000_ct0p1_rjrskim_v46.root");
 
+	path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v45/";
 	procFiles["MET"] = {};
-	//procFiles.at("MET").push_back(path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017A_rjrskim_v46.root");
-	procFiles.at("MET").push_back(path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim_v46.root");
-	procFiles.at("MET").push_back(path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018C_rjrskim_v46.root");
-	procFiles.at("MET").push_back(path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018D_rjrskim_v46.root");
+	procFiles.at("MET").push_back(path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016B_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016C_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016D_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016G_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016H_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017A_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017B_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017C_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017D_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017E_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017F_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018A_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018C_rjrskim_v45.root");
+	procFiles.at("MET").push_back(path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018D_rjrskim_v45.root");
 }
 
 
@@ -56,6 +91,7 @@ void RJRAnalysis(string proc, string ofilename_extra = ""){
 	MakeFileMap();
 
 	TChain chain = TChain("kuSkimTree");
+	
 	int nfiles = procFiles.at(proc).size();
 	for(int f = 0; f < nfiles; f++)
 		chain.Add(procFiles.at(proc)[f].c_str());
@@ -72,20 +108,21 @@ void RJRAnalysis(string proc, string ofilename_extra = ""){
 	//pTs < 150 - always use index 0 for rjr variables
 	string ptscut = "(rjrPTS[0] < 150)";
 	//triggers applied - 2018
-	string triggers = "Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60 == 1 || Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight == 1 || Trigger_PFMET120_PFMHT120_IDTight_PFHT60 == 1 || Trigger_PFMET120_PFMHT120_IDTight == 1";
+	string triggers = "(Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60 == 1 || Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight == 1 || Trigger_PFMET120_PFMHT120_IDTight_PFHT60 == 1 || Trigger_PFMET120_PFMHT120_IDTight == 1)";
 	//event cleaning filters applied
-	string met_filters = "Flag_BadChargedCandidateFilter == 1 && Flag_BadPFMuonDzFilter == 1 && Flag_BadPFMuonFilter == 1 && Flag_EcalDeadCellTriggerPrimitiveFilter == 1 && Flag_HBHENoiseFilter == 1 && Flag_HBHENoiseIsoFilter == 1 && Flag_ecalBadCalibFilter == 1 && Flag_eeBadScFilter == 1 && Flag_goodVertices && Flag_hfNoisyHitsFilter == 1";
+	string met_filters = "(Flag_BadChargedCandidateFilter == 1 && Flag_BadPFMuonDzFilter == 1 && Flag_BadPFMuonFilter == 1 && Flag_EcalDeadCellTriggerPrimitiveFilter == 1 && Flag_HBHENoiseFilter == 1 && Flag_HBHENoiseIsoFilter == 1 && Flag_ecalBadCalibFilter == 1 && Flag_eeBadScFilter == 1 && Flag_goodVertices == 1 && Flag_hfNoisyHitsFilter == 1)";
 	//hem veto for 2018 (if hemVeto then remove)
 	//string hemveto = "Flag_hemVeto == 0";
 	//nselphotons selection
 	string nselpho = "nSelPhotons >= 1";
 	//regions need to be exclusive with each other
 	//beam halo region: >= 1 beam halo photon
-	string bh_thresh = "0.917252";
+	string bh_thresh = "0.917252"; //nominal bh score threshold
+	//string bh_thresh = "0.817252"; //nominal bh score threshold
+	
 	string pb_thresh = "0.81476355";
-	string early_sel = "selPhoWTime < 0";
-	string late_sel =  "selPhoWTime > 0";
-	string barrelSel = "selPhoEta < 1.5 && selPhoEta > -1.5";
+	string early_sel = "selPhoWTime < -2";
+	string late_sel =  "selPhoWTime > 2";
 	
 	string bh_sel = "selPho_beamHaloCNNScore > "+bh_thresh;
 	string bh_sel_early = bh_sel+"&&"+early_sel;
@@ -97,9 +134,9 @@ void RJRAnalysis(string proc, string ofilename_extra = ""){
 
 	
 
-	//# photons that pass BH discr cut and are early and in the barrel
+	//# photons that pass BH discr cut and are early
 	string nPho_bhCR_early = "selPhoWTime["+bh_sel_early+"].size()";
-	//# photons that pass BH discr cut and are late and in the barrel
+	//# photons that pass BH discr cut and are late
 	string nPho_bhCR_late = "selPhoWTime["+bh_sel_late+"].size()";
 	string nPho_bhCR = "selPhoWTime["+bh_sel+"].size()";
 
@@ -108,22 +145,29 @@ void RJRAnalysis(string proc, string ofilename_extra = ""){
 	string nPho_pbCR = "selPhoWTime["+pb_sel+"].size()";
 	auto df1 = df0.Define("nPho_pbCR",nPho_pbCR).Define("nPho_bhCR",nPho_bhCR).
 				Define("nPho_pbCR_early",nPho_pbCR_early).Define("nPho_bhCR_early",nPho_bhCR_early).
-				Define("nPho_bhCR_late",nPho_bhCR_late);
+				Define("nPho_bhCR_late",nPho_bhCR_late).Define("passNPhoGe1SelectionBeamHaloCR0","passNPhoGe1SelectionBeamHaloCR[0]");
 
 	vector<ROOT::RDF::RResultPtr<TH1D>> hists1d;
 	vector<ROOT::RDF::RResultPtr<TH2D>> hists2d;
 
 	//update presel to include hem veto with new fix
 	auto df_presel = df1.Filter(metcut + " && " + ptscut + " && " + triggers + " && "+met_filters,"baseline");
-	auto df_ge1pho = df_presel.Filter(nselpho,"ge1nSelPho");
-	auto bh_discr_score = df_ge1pho.Histo1D({"bh_discr_score","bh_discr_score",50,-0.01,1.01},"selPho_beamHaloCNNScore");
-	hists1d.push_back(bh_discr_score);
-	auto pb_discr_score = df_ge1pho.Histo1D({"pb_discr_score","pb_discr_score",50,-0.01,1.01},"selPho_physBkgCNNScore");
-	hists1d.push_back(pb_discr_score);
+	auto df_ge1pho = df_presel.Filter("nSelPhotons >= 1","ge1nSelPho");
+	auto df_ge2pho = df_presel.Filter("nSelPhotons >= 2","ge2nSelPho");
+
 
 	//there are photons in the middle region that are not classified as beam halo OR phys bkg that can sneak in
 	//at least 1 photon in BH CR and no photons in phys bkg CR
-	auto df_bhCR = df_ge1pho.Filter("nPho_bhCR >= 1 && nPho_pbCR == 0","bhCR");
+	auto df_bhCR = df_ge1pho.Filter("passNPhoGe1SelectionBeamHaloCR0 == 1","bhCR(Flag)");
+	//auto df_bhCR = df_ge1pho.Filter("nPho_bhCR >= 1 && nPho_pbCR == 0","bhCR");
+	//auto df_bhCR = df_ge2pho.Filter("nPho_bhCR >= 1 && nPho_pbCR == 0","bhCR");
+	//total discr score
+	auto bh_discr_score_ge1pho = df_ge1pho.Histo1D({"bh_discr_score_ge1pho","bh_discr_score_ge1pho",50,-0.01,1.01},"selPho_beamHaloCNNScore");
+	hists1d.push_back(bh_discr_score_ge1pho);
+	auto bh_discr_score_ge2pho = df_ge2pho.Histo1D({"bh_discr_score_ge1pho","bh_discr_score_ge1pho",50,-0.01,1.01},"selPho_beamHaloCNNScore");
+	hists1d.push_back(bh_discr_score_ge2pho);
+
+
 	auto df_bhCR_rsCut = df_bhCR.Filter("rjr_Rs0 > 0.15");
 	auto df_bhCR_msCut = df_bhCR.Filter("rjr_Ms0 > 1000");
 	auto df_bhCR_msCut_rsCut = df_bhCR.Filter("rjr_Ms0 > 1000 && rjr_Rs0 > 0.15");
@@ -140,8 +184,10 @@ void RJRAnalysis(string proc, string ofilename_extra = ""){
 		pbCR_cutname = "pbCR";
 	auto df_pbCR = df_ge1pho.Filter("nPho_pbCR >= 1 && nPho_bhCR == 0",pbCR_cutname);
 
-	vector<double> msbins = {1000,1500,2000,3000};
-	vector<double> rsbins = {0.15,0.3,0.5,1};
+	//vector<double> msbins = {1000,1500,2000,3000};
+	//vector<double> rsbins = {0.15,0.3,0.5,1};
+	vector<double> msbins = {1000,2000,3000};
+	vector<double> rsbins = {0.15,0.3,1};
 	int n_msbins = msbins.size()-1;
 	int n_rsbins = rsbins.size()-1;
 	auto yields_early = df_bhCR_early.
@@ -164,15 +210,6 @@ void RJRAnalysis(string proc, string ofilename_extra = ""){
 	auto h_rjrRs_bhCR_late = df_bhCR_late_msCut.
 			Histo1D({"Rs_bhCR_late_msCut","Rs_bhCR_late_msCut",50,0,1.01},"rjr_Rs0");
 	hists1d.push_back(h_rjrRs_bhCR_late);
-	//auto h_time_bhCR_early = df_bhCR_early.
-	//		Histo1D({"time_bhCR_early","time_bhCR_early",100,-20,20},"selPhoWTime");
-	//hists1d.push_back(h_time_bhCR_early);
-	//auto h_score_bhCR_early = df_bhCR_early.
-	//		Histo1D({"score_bhCR_early","score_bhCR_early",100,0,1.02},"selPho_beamHaloCNNScore");
-	//hists1d.push_back(h_score_bhCR_early);
-	//auto h_score_bhCR = df_bhCR.
-	//		Histo1D({"score_bhCR","score_bhCR",100,0,1.02},"selPho_beamHaloCNNScore");
-	//hists1d.push_back(h_score_bhCR);
 	auto h_rjrMs_bhCR_early = df_bhCR_early_rsCut.
 			Histo1D({"Ms_bhCR_early_rsCut","Ms_bhCR_early_rsCut",50,0,3000},"rjr_Ms0");
 	hists1d.push_back(h_rjrMs_bhCR_early);
@@ -230,10 +267,13 @@ void RJRAnalysis(string proc, string ofilename_extra = ""){
 	hists1d.push_back(h_timesig_bhCR_late_msCut_rsCut);
 
 	string ofilename = procFiles.at(proc)[0];
-	ofilename = ofilename.substr(0,ofilename.find("_v31_"));
+	ofilename = ofilename.substr(0,ofilename.find("_R1"));
 	ofilename = ofilename.substr(ofilename.rfind("/")+1);
-	if(ofilename_extra != "") ofilename += "_"+ofilename_extra;
-	ofilename += "_rjrObsTEST.root";
+	if(proc == "MET")
+		ofilename += "FullRunII";
+	if(ofilename_extra != "")
+		ofilename += "_"+ofilename_extra;
+	ofilename += "_rjrObs.root";
 	TFile* ofile = new TFile(ofilename.c_str(),"RECREATE");
 	ofile->cd();
 	for(auto hist : hists1d) hist->Write();
