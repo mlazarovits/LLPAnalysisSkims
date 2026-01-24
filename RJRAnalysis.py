@@ -391,7 +391,7 @@ class RJRAnalysis:
     
             df_list = [df_presel]
             for ch_name, df_ch in channels.items():
-                print(" doing channel",ch_name)
+                #print(" doing channel",ch_name)
                 df_ch = self.define_lead_photon_vars(df_ch)
     
                 regions = self.define_regions(df_ch, ch_name, mc)
@@ -416,9 +416,9 @@ class RJRAnalysis:
                     )
                 )
                 for reg_name, df_reg in regions.items():
-                    print("  doing region", reg_name)
+                    #print("  doing region", reg_name)
                     self.fill_region_hists(
-                        df_reg, procstr, reg_name, ch_name,
+                        df_reg, proc, reg_name, ch_name,
                         hists1d, hists2d
                     )
                     df_list.append(df_reg)
@@ -449,7 +449,14 @@ if __name__ == "__main__":
         description="Run RJR analysis"
     )
 
-    # required positional argument
+    #TODO - set integrated luminosity
+    #parser.add_argument(
+    #    "--lumi",
+    #    type=float,
+    #    default=138,
+    #    help="Integrated lumi for scaling MC samples"
+    #)
+
     parser.add_argument(
         "--proc",
         "-p",
@@ -492,7 +499,6 @@ if __name__ == "__main__":
         help="Extra string appended to output filename"
     )
 
-    parser.add_argument("--showEffs",help="show rdataframe efficiencies",action="store_true",default=False)
     
     args = parser.parse_args()
 
