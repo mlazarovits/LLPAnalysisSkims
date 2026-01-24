@@ -1,0 +1,4 @@
+[submodule "LLPStandardPlots"]
+	path = LLPStandardPlots
+	url = https://github.com/mlazarovits/LLPStandardPlots.git
+        branch = main
