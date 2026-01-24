@@ -2,53 +2,41 @@ import ROOT
 from typing import Dict, List, Tuple, Optional
 import numpy as np
 import cmsstyle as CMS
+
 class ComparisonMaker:
     def __init__(self):
-        self._ensure_mc_colors()
+        self.label_mapping = {
+            'QCD': 'QCD multijets',
+            'WJets': 'W + jets', 
+            'ZJets': 'Z + jets',
+            'GJets': '#gamma + jets',
+            'TTXJets': 't#bar{t} + X',
+            'TTJets': 't#bar{t} + jets',
+            'DYJets': 'Drell-Yan',
+            'VV': 'Diboson',
+            'SingleTop': 'Single top',
+            'ST': 'Single top'
+        }
 
-
-    def _ensure_mc_colors(self):
-        """Force recreation of MC colors at specific indices to override palette interference."""
-        # Define the hex colors and expected indices from rootlogon.C
-        hex_colors = ["#5A4484", "#347889", "#F4B240", "#E54B26", "#C05780", "#7A68A6", "#2E8B57", "#8B4513"]
-        expected_indices = [1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186]
+    def _get_background_color_index(self, inlabel):
+        """Get the color index for a specific background based on physics process."""
+        bg_name = self.label_mapping[inlabel] 
+        # Background to color mapping (using original hex color indices)
+        # QCD=purple, WJets=teal, ZJets=yellow/gold, TTX=red/orange, GJets=pink/rose
+        background_color_map = {
+            'QCD multijets': 1179,        # #5A4484 - Purple
+            'W + jets': 1180,             # #347889 - Teal/Blue-green
+            'Z + jets': 1181,             # #F4B240 - Yellow/Gold
+            't#bar{t} + X': 1182,         # #E54B26 - Red/Orange
+            't#bar{t} + jets': 1182,      # #E54B26 - Red/Orange (same as TTX)
+            '#gamma + jets': 1182,        # #C05780 - Pink/Rose
+            # Assign remaining backgrounds to remaining colors
+            'Drell-Yan': 1184,            # #7A68A6 - Light purple
+            'Diboson': 1185,              # #2E8B57 - Sea green
+            'Single top': 1186,           # #8B4513 - Saddle brown
+        }
         
-        for i, hex_color in enumerate(hex_colors):
-            expected_index = expected_indices[i]
-            
-            # Parse hex color to RGB
-            hex_clean = hex_color.replace("#", "")
-            r = int(hex_clean[0:2], 16) / 255.0
-            g = int(hex_clean[2:4], 16) / 255.0  
-            b = int(hex_clean[4:6], 16) / 255.0
-            
-            # Get existing color or create new one
-            existing_color = ROOT.gROOT.GetColor(expected_index)
-            if existing_color:
-                # Update existing color's RGB values
-                existing_color.SetRGB(r, g, b)
-            else:
-                # Create new color at specific index
-                ROOT.TColor(expected_index, r, g, b)
-    
-    def _setup_comparison_canvas(self, canvas_name, x_min, x_max, x_label="", canvas_width=1100, canvas_height=800):
-        """Shared canvas setup for data/MC comparison plots."""
-        canvas = CMS.cmsCanvas(canvas_name, x_min, x_max, 0, 1, x_label, "Events", square=False, extraSpace=0.01, iPos=0)
-        canvas.SetCanvasSize(canvas_width, canvas_height)
-        
-        # Create pads for main plot and ratio
-        pad1 = ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
-        pad2 = ROOT.TPad("pad2", "pad2", 0, 0.0, 1, 0.3)
-        
-        pad1.SetBottomMargin(0.01)
-        pad1.SetTopMargin(0.1)
-        pad2.SetBottomMargin(0.4)
-        
-        canvas.cd()
-        pad1.Draw()
-        pad2.Draw()
-        
-        return canvas, pad1, pad2
+        return background_color_map.get(bg_name, 1179)  # Default to purple if not found
 
 class UnrollMaker:
     def __init__(self):

@@ -1,6 +1,6 @@
-from LLPStandardPlots.src.plotter import Plotter1D, Plotter2D
+from LLPStandardPlots.src.plotter import Plotter1D, Plotter2D, PlotterDataMC
 from LLPStandardPlots.src.style import StyleManager
-from UnrollMaker import UnrollMaker
+from BasePlotMaker import UnrollMaker, ComparisonMaker 
 import ROOT
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
@@ -26,7 +26,27 @@ labels_dict = {
     "MET18" : "MET PD 2018",
     "MET17" : "MET PD 2017",
     "MET16" : "MET PD 2016",
+    "Prompt EE nonIso CR" : "_{t0}^{CR,!Iso}",
+    "earlyBHCR" : "_{t+}^{CR, BH}",
+    "lateBHCR" : "_{t-}^{CR, BH}"
 }
+
+def transform_to_final_state(inlabel):
+    retlabel = ""
+    labels = inlabel.split(", ")
+    objlabel = [l for l in labels if "#gamma" in l]
+    if len(objlabel) == 1: #1 channel
+        retlabel = objlabel[0]
+        reglabel = [l for l in labels if retlabel not in l]
+        if len(reglabel) == 1: #1 region
+            retlabel += f"{labels_dict[reglabel[0]]}"
+            return retlabel
+        else: #multi-region, not defined
+            print("labels",labels,"parsing not defined")
+            return inlabel
+    else: #multi-channel, not defined
+        print("labels",labels,"parsing not defined")
+        return inlabel
 
 def interval_to_label(interval):
     str_label = "["+str(interval[0])+", "+str(interval[1])
@@ -65,7 +85,7 @@ class PlotFormatHelper:
                 self._hist_index[("channel", channel)].add(name)
                 self._hist_index[("region", region)].add(name)
 
-    def GetHists(self, obs = None, process = None, channel = None, region = None):
+    def GetHists(self, obs = None, process = None, channel = None, region = None, histtype = None):
         if obs is None and process is None and channel is None and region is None:
             print("Need to specify at least one of the following: obs, process, channel, region")
     
@@ -83,13 +103,69 @@ class PlotFormatHelper:
             set.intersection(*selections)
             if selections else self._all_hists
         )
-        return [self._file[name] for name in names]
+        ret_hists = [self._file[name] for name in names]
+        if histtype is not None:
+            for hist in ret_hists:
+                name = hist.GetName()+"_"+histtype
+                hist.SetName(name)
+        return ret_hists 
 
     
     #normalize histogram
     def NormalizeHist(self, hist):
         if hist.Integral() > 0:
             hist.Scale(1/hist.Integral())
+
+    def GeVtoTeV(self, hist,axis = None):
+        if axis is None:
+            hTeV = ROOT.TH1D(
+                hist.GetName()+"tev",
+                hist.GetTitle(),
+                hist.GetNbinsX(),
+                hist.GetXaxis().GetXmin() / 1000.0,
+                hist.GetXaxis().GetXmax() / 1000.0
+            )
+            for i in range(1, hist.GetNbinsX()+1): 
+                hTeV.SetBinContent(i, hist.GetBinContent(i))
+                hTeV.SetBinError(i, hist.GetBinError(i))
+            return hTeV
+        else: #2d histogram
+            if("TH2D" not in str(type(hist))):
+                print("This functionality with choosing an axis to transform is only supported for TH2D. Do not pass axis option with TH1D")
+                return hist
+            xmin = hist.GetXaxis().GetXmin()
+            xmax = hist.GetXaxis().GetXmax()
+            ymin = hist.GetYaxis().GetXmin()
+            ymax = hist.GetYaxis().GetXmax()
+ 
+            nx = hist.GetNbinsX()
+            ny = hist.GetNbinsY()
+          
+            if(axis == 0):
+                xmin /= 1000.0
+                xmax /= 1000.0
+            elif(axis == 1):
+                ymin /= 1000.0
+                ymax /= 1000.0
+            else:
+                print("Axis",axis,"not supported for tev transformation")
+                return hist
+ 
+            hTeV = ROOT.TH2D(
+                hist.GetName()+"tev",
+                hist.GetTitle(),
+                hist.GetNbinsX(),
+                xmin,
+                xmax,
+                hist.GetNbinsY(),
+                ymin,
+                ymax
+            )
+            for ix in range(1, nx + 1):
+                for iy in range(1, ny + 1):
+                    hTeV.SetBinContent(ix, iy, hist.GetBinContent(ix, iy))
+                    hTeV.SetBinError(ix, iy, hist.GetBinError(ix, iy))
+            return hTeV
 
     #unroll 2D histogram
     def UnrollHist(self, h2, normalize = False, gevtotev = None):
@@ -206,13 +282,33 @@ class PlotFormatHelper:
 
 class PlotFormatter():
     def __init__(self, lumi = 138, plot_format = ".png"):
-        self._styler = StyleManager() 
+        self._styler = StyleManager(lumi) 
         self._plotter1d = Plotter1D(self._styler)
         self._plotter2D = Plotter2D(self._styler)
+        self._plotterDataMC = PlotterDataMC(self._styler)
         self._plot_format = plot_format
         self._lumi = lumi
-        
-        
+      
+
+    def format_2d_hist(self, name, hist, sample_label, x_label, x_min, x_max, y_label, y_min, y_max, normalize = False, globallabel = "", sample_label_x_pos = 0.65):
+        canvas = CMS.cmsCanvas(name, x_min, x_max, y_min, y_max, x_label, y_label, 
+                              square=False, extraSpace=0.01, iPos=0, with_z_axis=True)
+        axis_labels = {}
+        axis_labels['x'] = x_label
+        axis_labels['y'] = y_label
+        final_state_label = ""
+        if sample_label not in labels_dict.values():
+            sample_label = labels_dict[sample_label]
+        if globallabel != "":
+            final_state_label = transform_to_final_state(globallabel)
+        self._plotter2D.plot_2d_baseFormat(hist, canvas, axis_labels, sample_label, final_state_label, sample_label_x_pos=sample_label_x_pos)
+        return canvas
+ 
+    def get_hist_process(self, hist): 
+        procname = hist.GetName()
+        procname = procname[procname.find("_")+1:]
+        procname = procname[:procname.find("_")]
+        return procname       
     
     def format_hist_1d_base(self, hist, color, style, normalize = False):
         hist.SetLineColor(color)
@@ -227,13 +323,13 @@ class PlotFormatter():
     def format_hist_1d(self, hist, color, style, normalize = False, logy=False):
         format_hist_1d_base(hist, color, style, normalize=False)
         #do canvas
-        can = plotter._initialize_canvas(name, xmin, xmax, var_label)	
+        can = plotter1d._initialize_canvas(name, xmin, xmax, var_label)	
         if logy:
             can.SetLogy()
         
         #setup hist axes
         x_label = var_label 
-        self._plotter1d.setup_axes(hist, x_label, normalized=normalize) 
+        self._plotter1d.setup_axes(hist, x_label, normalize=normalize) 
         hist.Draw("HIST")
         #add histograms after dereferencing
         self._styler.draw_cms_labels(prelim_str="Preliminary")#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
@@ -386,6 +482,195 @@ class PlotFormatter():
         lumi_latex.DrawLatex(lumi_location, y_location, f"{self._lumi:.0f} fb^{{-1}} (13 TeV)")
         
         return cms_objects + [lumi_latex]
+
+    def format_stack_mc_hist(self, hist, color):
+        hist.SetLineColor(ROOT.kBlack)
+        hist.SetLineStyle(1)
+        hist.SetLineWidth(1)
+        hist.SetFillColor(color) 
+        hist.SetStats(0)
+
+    def format_stack_data_hist(self, hist):
+        hist.SetMarkerStyle(20)
+        hist.SetLineColor(ROOT.kBlack)
+        hist.SetMarkerSize(self._styler.data_marker_size)
+        hist.SetLineWidth(self._styler.data_line_width)
+
+    def format_stack_hists_datamc(self, canvas_name, data_histogram, mc_histograms, var_label, x_min, x_max, normalize, draw_mc_uncertainty = False, globallabel = ""):
+        comp_maker = ComparisonMaker()
+        # Use shared canvas setup
+        canvas, pad1, pad2 = self._plotterDataMC._setup_comparison_canvas(canvas_name, x_min, x_max, var_label)
+        # Setup main pad with standard data/MC grid
+        pad1.cd() 
+        pad1.SetGridx(True)
+        pad1.SetGridy(True)
+        pad1.SetLogy(True)
+        pad1.SetLeftMargin(self._styler.margin_left+0.04)
+        pad1.SetRightMargin(self._styler.margin_right_ratio)
+        # Create and add MC uncertainty band using helper
+        mc_histograms_labeled = []
+        for hist in mc_histograms:
+            print(hist.GetName(), hist.Integral())
+            bgname = self.get_hist_process(hist)
+            color = comp_maker._get_background_color_index(bgname)
+            self.format_stack_mc_hist(hist, color)
+            format_bg_name = comp_maker.label_mapping[bgname]
+             
+            mc_histograms_labeled.append((hist, format_bg_name))
+        # Sort MC histograms by yield (ascending order)
+        mc_histograms_labeled.sort(key=lambda x: x[0].Integral())
+        
+        # Create THStack for MC
+        stack = ROOT.THStack("stack", "")
+        for mc_hist, _ in mc_histograms_labeled:
+            stack.Add(mc_hist)
+            
+        # Apply normalization after histograms are created but before drawing
+        if normalize:
+            # Get total MC integral for normalization
+            total_mc_integral = 0
+            for mc_hist, _ in mc_histograms_labeled:
+                total_mc_integral += mc_hist.Integral()
+            
+            # Normalize each MC histogram by the total MC integral
+            if total_mc_integral > 0:
+                for mc_hist, _ in mc_histograms_labeled:
+                    mc_hist.Scale(1.0 / total_mc_integral)
+        
+        
+        if normalize:
+            data_histogram.Scale(1/data_histogram.Integral())
+        self.format_stack_data_hist(data_histogram)
+        # Set axis ranges
+        data_max = data_histogram.GetMaximum()
+        stack_max = stack.GetMaximum()
+        max_val = max(data_max, stack_max)
+        
+        #stack.GetXaxis().SetRangeUser(x_min,x_max)
+        # Draw stack and data with grid behind histograms
+        stack.Draw("HIST")
+        #pad1.RedrawAxis("G")  # Draw grid lines behind everything  
+        #stack.Draw("HIST SAME")  # Redraw histogram content on top of grid
+        
+        # Set axis ranges after all drawing is complete
+        if normalize:
+            # For normalized plots, use fixed range that works with log scale
+            stack.SetMaximum(max_val * 5.)
+            stack.SetMinimum(2e-4)
+            stack.GetHistogram().GetYaxis().SetRangeUser(2e-4, max_val * 5.)
+        else:
+            # For regular plots, use the original scaling
+            stack.SetMaximum(max_val * 10.)
+            stack.SetMinimum(0.5)
+            stack.GetHistogram().GetYaxis().SetRangeUser(0.5, max_val * 10)
+        stack.GetXaxis().SetLabelSize(0)
+        
+        # Set y-axis title based on normalization
+        if normalize:
+            # Extract just the variable name without units for the normalized y-axis title
+            import re
+            clean_var = re.sub(r'\s*\[.*?\]', '', var_label).strip()
+            y_axis_title = "normalized events"#f"#frac{{1}}{{N}}  #frac{{dN}}{{d({clean_var})}}"
+        else:
+            y_axis_title = "number of events"
+        stack.GetYaxis().SetTitle(y_axis_title)
+        stack.GetYaxis().SetTitleSize(0.06)
+        stack.GetYaxis().SetTitleOffset(1.1)
+        stack.GetYaxis().SetLabelSize(0.05)
+        stack.GetYaxis().CenterTitle(True)
+        
+        mc_uncertainty = self._plotterDataMC._create_mc_uncertainty_band(mc_histograms_labeled)
+        if mc_uncertainty and draw_mc_uncertainty:
+            mc_uncertainty.Draw("E2 SAME")  # E2 = error band only (no markers)
+        
+        if data_histogram:
+            data_histogram.Draw("PEX0 SAME")
+        
+        # Create legend using helper
+        legend = self._plotterDataMC._create_standard_legend(data_histogram, mc_uncertainty, mc_histograms_labeled)
+        legend.Draw()
+        
+        # Draw standard labels using helper
+        self._styler.draw_cms_labels(cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
+    
+        if globallabel != "":
+            final_state_label = transform_to_final_state(globallabel)
+            self._plotterDataMC._draw_region_label(canvas, final_state_label, x_pos=0.45, y_pos=0.93, textsize=0.05, plot_type="datamc")
+        # Draw bottom pad (ratio) only if data is available
+        pad2.cd()
+        pad2.SetGridx(True)
+        pad2.SetGridy(True)
+        pad2.SetLeftMargin(self._styler.margin_left+0.04)
+        pad2.SetRightMargin(self._styler.margin_right_ratio)
+        
+        # Create total MC histogram for ratio
+        total_mc_hist = mc_histograms_labeled[0][0].Clone("total_mc")
+        total_mc_hist.Reset()
+        for mc_hist, _ in mc_histograms_labeled:
+            total_mc_hist.Add(mc_hist)
+        
+        # Create ratio histogram
+        ratio_hist = data_histogram.Clone("ratio")
+        ratio_hist.Divide(total_mc_hist)
+        
+        # Style ratio plot
+        ratio_hist.SetLineColor(self._plotterDataMC.data_color)
+        ratio_hist.SetLineWidth(self._styler.data_line_width)
+        ratio_hist.SetMarkerColor(self._plotterDataMC.data_color)
+        ratio_hist.SetMarkerStyle(20)
+        ratio_hist.SetMarkerSize(self._styler.data_marker_size)
+
+        ratio_hist.SetTitle("")
+        ratio_hist.GetXaxis().SetTitle(var_label)
+        ratio_hist.GetYaxis().SetTitle("#frac{data}{model}")
+        ratio_hist.GetYaxis().SetRangeUser(0.5, 1.5)
+        ratio_hist.GetXaxis().SetTitleSize(0.14)
+        ratio_hist.GetYaxis().SetTitleSize(0.14)
+        ratio_hist.GetXaxis().SetLabelSize(0.12)
+        ratio_hist.GetYaxis().SetLabelSize(0.12)
+        ratio_hist.GetYaxis().SetTitleOffset(0.45)
+        ratio_hist.GetXaxis().SetTitleOffset(1.15)
+        ratio_hist.GetYaxis().SetNdivisions(505)
+        ratio_hist.GetXaxis().CenterTitle(True)
+        ratio_hist.GetYaxis().CenterTitle(True)
+        
+        # Draw ratio histogram first to establish axis formatting
+        ratio_hist.Draw("PEX0")
+        
+        # Create and draw MC uncertainty band for ratio plot
+        mc_ratio_uncertainty = self._plotterDataMC._create_mc_ratio_uncertainty_band(total_mc_hist)
+        if mc_ratio_uncertainty and draw_mc_uncertainty:
+            mc_ratio_uncertainty.Draw("E2 SAME")
+        
+        # Reference line at 1
+        x_min_ratio = ratio_hist.GetXaxis().GetXmin()
+        x_max_ratio = ratio_hist.GetXaxis().GetXmax()
+        line = ROOT.TLine(x_min_ratio, 1, x_max_ratio, 1)
+        line.SetLineStyle(2)
+        line.Draw()
+        
+        # Keep objects alive
+        canvas.ratio_hist = ratio_hist
+        canvas.total_mc_hist = total_mc_hist
+        canvas.mc_ratio_uncertainty = mc_ratio_uncertainty
+        canvas.line = line
+
+        pad1.SetFixedAspectRatio()
+        pad2.SetFixedAspectRatio()
+            
+        canvas.Modified()
+        canvas.Update()
+        # Keep objects alive
+        canvas.pad1 = pad1
+        canvas.pad2 = pad2
+        canvas.stack = stack
+        canvas.mc_histograms = mc_histograms_labeled
+        canvas.mc_uncertainty = mc_uncertainty
+        canvas.data_hist = data_histogram
+        canvas.legend = legend
+        
+        return canvas
+
 
     def format_unrolled_hists(self, name, histograms, totalbins, xlabel, ylabel, labels, globallabel = ""):
         n_hists = len(histograms)
