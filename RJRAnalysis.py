@@ -278,7 +278,7 @@ class RJRAnalysis:
    	
         h1d.append(
             df.Histo1D(
-	            (f"Ms_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 3000),
+	            (f"Ms_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 5000),
                 "rjr_Ms0", "evtFillWgt"
             )
         )
@@ -356,7 +356,9 @@ class RJRAnalysis:
                 chain.Add(f)
     
     
-            df = RDataFrame(chain, self._branches)
+            df00 = RDataFrame(chain, self._branches)
+            print("There are ",df00.Filter("rjr_Ms.size() == 0 && nSelPhotons > 1").Count().GetValue(),"events with out RJR info")
+            df = df00.Filter("rjr_Rs.size() > 0 && rjr_Ms.size() > 0") #in case these have size 0, can lead to undefined behavior
             if checkForBadWgts:
                 print("checking for bad event weights - will cost one (1) event loop")
                 # Count rows where the column is NaN or Inf
