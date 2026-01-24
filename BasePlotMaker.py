@@ -15,7 +15,8 @@ class ComparisonMaker:
             'DYJets': 'Drell-Yan',
             'VV': 'Diboson',
             'SingleTop': 'Single top',
-            'ST': 'Single top'
+            'ST': 'Single top',
+            'DiPJBox' : 'Di-photon + jets' #may need to combine with GJets
         }
 
     def _get_background_color_index(self, inlabel):
