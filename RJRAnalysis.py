@@ -357,7 +357,7 @@ class RJRAnalysis:
     
     
             df00 = RDataFrame(chain, self._branches)
-            print("There are ",df00.Filter("rjr_Ms.size() == 0 && nSelPhotons > 1").Count().GetValue(),"events with out RJR info")
+            print("There are",df00.Filter("rjr_Ms.size() == 0 && nSelPhotons > 1").Count().GetValue(),"events without RJR info")
             df = df00.Filter("rjr_Rs.size() > 0 && rjr_Ms.size() > 0") #in case these have size 0, can lead to undefined behavior
             if checkForBadWgts:
                 print("checking for bad event weights - will cost one (1) event loop")
