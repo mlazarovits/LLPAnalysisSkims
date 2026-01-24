@@ -42,40 +42,39 @@ class FileProcessor():
             path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p5_rjrskim.root"
         ]
         
-
-	self._procFiles["WJets"] = [
-		path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-100To200_rjrskim.root",
-		path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-1200To2500_rjrskim.root",
-		path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-200To400_rjrskim.root",
-		path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-2500ToInf_rjrskim.root",
-		path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-400To600_rjrskim.root",
-		path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-600To800_rjrskim.root",
-		path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-800To1200_rjrskim.root"
-	]
-	
-	self._procFiles["ZJets"] = [
-		path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-100To200_rjrskim.root",
-		path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-1200To2500_rjrskim.root",
-		path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-200To400_rjrskim.root",
-		path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-2500ToInf_rjrskim.root",
-		path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-400To600_rjrskim.root",
-		path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-600To800_rjrskim.root",
-		path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-800To1200_rjrskim.root"
-	]
-
-	self._procFiles["TTXJets"] = [
-		path+"TTXJets_R18_SVIPM100_v31_TGJets_rjrskim.root",
-		path+"TTXJets_R18_SVIPM100_v31_TTGJets_rjrskim.root",
-		path+"TTXJets_R18_SVIPM100_v31_TTJets_rjrskim.root",
-		path+"TTXJets_R18_SVIPM100_v31_ttWJets_rjrskim.root",
-		path+"TTXJets_R18_SVIPM100_v31_ttZJets_rjrskim.root"
-	]
-
-	self._procFiles["DiPJBox"] = [
-		path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_M40_80-sherpa_rjrskim.root",
-		path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-0to40_rjrskim.root",
-		path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
-	]
+        self._procFiles["WJets"] = [
+        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-100To200_rjrskim.root",
+        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-1200To2500_rjrskim.root",
+        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-200To400_rjrskim.root",
+        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-2500ToInf_rjrskim.root",
+        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-400To600_rjrskim.root",
+        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-600To800_rjrskim.root",
+        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-800To1200_rjrskim.root"
+        ]
+        
+        self._procFiles["ZJets"] = [
+        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-100To200_rjrskim.root",
+        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-1200To2500_rjrskim.root",
+        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-200To400_rjrskim.root",
+        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-2500ToInf_rjrskim.root",
+        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-400To600_rjrskim.root",
+        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-600To800_rjrskim.root",
+        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-800To1200_rjrskim.root"
+        ]
+        
+        self._procFiles["TTXJets"] = [
+        	path+"TTXJets_R18_SVIPM100_v31_TGJets_rjrskim.root",
+        	path+"TTXJets_R18_SVIPM100_v31_TTGJets_rjrskim.root",
+        	path+"TTXJets_R18_SVIPM100_v31_TTJets_rjrskim.root",
+        	path+"TTXJets_R18_SVIPM100_v31_ttWJets_rjrskim.root",
+        	path+"TTXJets_R18_SVIPM100_v31_ttZJets_rjrskim.root"
+        ]
+        
+        self._procFiles["DiPJBox"] = [
+        	path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_M40_80-sherpa_rjrskim.root",
+        	path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-0to40_rjrskim.root",
+        	path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
+        ]
 
         
         path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v45/"
