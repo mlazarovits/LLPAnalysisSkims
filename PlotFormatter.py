@@ -27,8 +27,8 @@ labels_dict = {
     "MET17" : "MET PD 2017",
     "MET16" : "MET PD 2016",
     "Prompt EE nonIso CR" : "_{t0}^{CR,!Iso}",
-    "earlyBHCR" : "_{t+}^{CR, BH}",
-    "lateBHCR" : "_{t-}^{CR, BH}"
+    "earlyBHCR" : "_{t-}^{CR, BH}",
+    "lateBHCR" : "_{t+}^{CR, BH}"
 }
 
 def transform_to_final_state(inlabel):
@@ -286,6 +286,7 @@ class PlotFormatter():
         self._plotter1d = Plotter1D(self._styler)
         self._plotter2D = Plotter2D(self._styler)
         self._plotterDataMC = PlotterDataMC(self._styler)
+        self._plotterDataMC._ensure_mc_colors()
         self._plot_format = plot_format
         self._lumi = lumi
       
