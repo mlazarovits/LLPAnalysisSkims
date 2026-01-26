@@ -16,9 +16,9 @@ labels_dict = {
     "1pho" : "1 #gamma",
     "nonIsoEECR" : "Prompt EE nonIso CR",
     "verynonIsoEECR" : "Prompt EE veryNonIso CR",
-    "BHCR" : "Beam Halo CR",
-    "earlyBHCR" : "Early Beam Halo CR",
-    "lateBHCR" : "Late Beam Halo CR",
+    "BHCR_long" : "Beam Halo CR",
+    "earlyBHCR_long" : "Early Beam Halo CR",
+    "lateBHCR_long" : "Late Beam Halo CR",
     "isoEESR" : "Prompt Iso SR",
     "earlyPBCR" : "Early !Beam Halo CR",
     "latePBCR" : "Late !Beam Halo SR",
@@ -27,6 +27,7 @@ labels_dict = {
     "MET17" : "MET PD 2017",
     "MET16" : "MET PD 2016",
     "Prompt EE nonIso CR" : "_{t0}^{CR,!Iso}",
+    "Prompt EE veryNonIso CR" : "_{t0}^{CR,V!Iso}",
     "earlyBHCR" : "_{t-}^{CR, BH}",
     "lateBHCR" : "_{t+}^{CR, BH}"
 }
@@ -39,7 +40,7 @@ def transform_to_final_state(inlabel):
         retlabel = objlabel[0]
         reglabel = [l for l in labels if retlabel not in l]
         if len(reglabel) == 1: #1 region
-            retlabel += f"{labels_dict[reglabel[0]]}"
+            retlabel += f"labels_dict[reglabel[0]]"
             return retlabel
         else: #multi-region, not defined
             print("labels",labels,"parsing not defined")
@@ -234,7 +235,7 @@ class PlotFormatHelper:
         
 
     
-    def MakeLegendLabels(self, inlabels):
+    def MakeLegendLabels(self, inlabels, option=None):
         procs = set()
         chs = set()
         regs = set()
@@ -243,6 +244,8 @@ class PlotFormatHelper:
         for label in inlabels:
             print("label",label)
             obs, proc, ch, reg, histtype_l = label.split("_")
+            if option is not None:
+                reg += "_"+option
             if histtype_l != histtype:
                 print("Error: combining hists with types",histtype_l,"and",histtype)
             if proc not in labels_dict.keys():
@@ -261,7 +264,7 @@ class PlotFormatHelper:
         final_labels = []
         group_label = ""
         for ltype in list_types:
-            print(ltype)
+            print('ltype',ltype)
             if len(ltype) == 1:
                 group_label += list(ltype)[0]+", "
             elif len(ltype) > 1:
@@ -730,7 +733,7 @@ class PlotFormatter():
         #canvas.SetGridx()
         #canvas.SetGridy()
         #canvas.Update()
-        
+
         # Sort histograms by total yield (highest to lowest for display order)
         hist_with_yields = []
         for i, hist in enumerate(histograms):

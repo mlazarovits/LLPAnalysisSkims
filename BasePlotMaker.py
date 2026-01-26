@@ -30,7 +30,8 @@ class ComparisonMaker:
             'Z + jets': 1181,             # #F4B240 - Yellow/Gold
             't#bar{t} + X': 1182,         # #E54B26 - Red/Orange
             't#bar{t} + jets': 1182,      # #E54B26 - Red/Orange (same as TTX)
-            '#gamma + jets': 1182,        # #C05780 - Pink/Rose
+            '#gamma + jets': 1183,        # #C05780 - Pink/Rose
+            'Di-photon + jets': 1183,        # #C05780 - Pink/Rose
             # Assign remaining backgrounds to remaining colors
             'Drell-Yan': 1184,            # #7A68A6 - Light purple
             'Diboson': 1185,              # #2E8B57 - Sea green
