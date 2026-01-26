@@ -5,4 +5,5 @@
 gStyle->SetPadGridX(true);
 gStyle->SetPadGridY(true);
 gStyle->SetOptStat(0000);
+gROOT->ProcessLine(".x LLPStandardPlots/rootlogon.C");
 }
