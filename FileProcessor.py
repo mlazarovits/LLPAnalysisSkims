@@ -70,13 +70,6 @@ class FileProcessor():
         	path+"TTXJets_R18_SVIPM100_v31_ttZJets_rjrskim.root"
         ]
         
-        self._procFiles["DiPJBox"] = [
-        	path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_M40_80-sherpa_rjrskim.root",
-        	path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-0to40_rjrskim.root",
-        	path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
-        ]
-
-        
         path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v45/"
         self._procFiles["METPD16"] = [
             path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016B_rjrskim_v45.root",
@@ -121,6 +114,9 @@ class FileProcessor():
             path+"GJets_R18_SVIPM100_v31_GJets_HT-200To400_rjrskim.root",
             path+"GJets_R18_SVIPM100_v31_GJets_HT-400To600_rjrskim.root",
             path+"GJets_R18_SVIPM100_v31_GJets_HT-600ToInf_rjrskim.root",
+            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_M40_80-sherpa_rjrskim.root",
+            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-0to40_rjrskim.root",
+            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
         ]
 
     def field(self, name, val):
