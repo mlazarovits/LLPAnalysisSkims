@@ -1,8 +1,9 @@
-from ROOT import RDataFrame, TChain, TFile, TH1, TH2
+from ROOT import RDataFrame, TChain, TFile, TH1, TH2, gInterpreter
 import sys
 import argparse
 import os
 from FileProcessor import FileProcessor
+import re
 # ROOT.EnableImplicitMT()  # optional
 
 # -------------------------
@@ -12,6 +13,82 @@ from FileProcessor import FileProcessor
 from array import array
 TH1.SetDefaultSumw2(True)
 TH2.SetDefaultSumw2(True)
+
+
+
+def add_dollar_to_inequalities(s):
+    """
+    Finds all simple inequalities in a string and wraps them in $...$.
+    Example: "rjrPTS[0] < 150" -> "rjrPTS[0] $< 150$"
+    """
+    # pattern: operator optionally preceded by whitespace, then a number or variable
+    pattern = r"(\s*(<=|>=|<|>|==|!=)\s*[^&|]+)"
+    
+    # replace matches with $...$
+    result = re.sub(pattern, lambda m: f" ${m.group(1).strip()}$ ", s)
+    
+    # clean extra spaces
+    result = re.sub(r"\s+", " ", result).strip()
+    
+    return result
+
+
+
+def write_latex_table(output_path, selected_data):
+    with open(output_path, "w") as f:
+        for infile, data in selected_data.items():
+            f.write("\\begin{table}\n")
+            f.write("\\centering\n")
+            f.write("\\caption{"+infile+"}\n")
+            f.write("\\begin{tabular}{l c c}\n")
+            f.write("\\hline\n")
+            f.write("Cut & Entries & Efficiency (\\%)\\\\\n")
+            f.write("\\hline\n")
+            for label, entries, eff in data:
+                if ">" in label or "<" in label:
+                    label = add_dollar_to_inequalities(label)
+                f.write(f"{label} & {int(entries)} & {eff:.3f} \\\\\n")
+            f.write("\\hline\n")
+            f.write("\\end{tabular}\n")
+            f.write("\\end{table}\n\n")
+
+def report2str(report):
+    begin = report.begin()
+    if begin == report.end(): return ""
+    allEntries = begin.GetAll()
+    result = []
+    for ci in report:
+        name = ci.GetName()
+        pass_val = ci.GetPass()
+        all = ci.GetAll()
+        eff = ci.GetEff()
+        cumulativeEff = 100.0 * float(pass_val) / float(allEntries) if allEntries > 0 else 0.0
+        result+=[f"{name:10}: pass={pass_val:<10} all={all:<10} -- eff={eff:.2f} % cumulative eff={cumulativeEff:.2f} %"]
+    print(result)
+    return result
+
+def parse_eff_line(line):
+    # line is like: "cutName: 1234 (0.567)"
+    # split by ':' first
+    if ':' not in line:
+        return None
+    name, rest = line.split(':', 1)
+    name = name.strip()
+    # rest has entries and efficiency
+    parts = rest.strip().split()
+    if len(parts) < 2:
+        return None
+    pass_entries = parts[0]
+    pass_entries = pass_entries[pass_entries.find("=")+1:]
+    n_entries = int(pass_entries)
+    eff_perc = parts[3]
+    eff_perc = eff_perc[eff_perc.find("=")+1:]
+    eff = float(eff_perc)
+  
+    #for latex 
+    name = name.replace("_","\_")
+    return name, n_entries, eff
+
 class RJRAnalysis:
     def __init__(self):
         self._branches = [
@@ -145,7 +222,25 @@ class RJRAnalysis:
             "1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
             "ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
         }
-    
+        '''
+        df_1pho = df.Filter("nSelPhotons == 1", "1nSelPho")
+        df_ge2pho = df.Filter("nSelPhotons >= 2", "ge2nSelPho")
+      
+        df_1pho = self.define_lead_photon_vars(df_1pho)
+        df_ge2pho = self.define_lead_photon_vars(df_ge2pho)
+ 
+        #define sublead branches for ge2pho channel 
+        df_ge2pho = (df_ge2pho.Define("subleadPhotonBHScore", "selPho_beamHaloCNNScore[1]")
+            .Define("subleadPhotonPBScore", "selPho_physBkgCNNScore[1]")
+            .Define("subleadPhotonTime", "selPhoWTimeSig[1]")
+            .Define("subleadPhotonTimeSig", "selPhoWTime[1]")
+            .Define("subleadPhotonNonIsoScore", "selPho_nonIsoANNScore[1]")
+            .Define("subleadPhotonEEnonIsoScore", "EEnonIsoScore[1]"))
+        return {
+            "1pho": df_1pho,
+            "ge2pho": df_ge2pho,
+        }
+        ''' 
     
     def define_lead_photon_vars(self, df):
         return (
@@ -157,7 +252,7 @@ class RJRAnalysis:
             .Define("leadPhotonNonIsoScore", "selPho_nonIsoANNScore[0]")
             .Define("leadPhotonEEnonIsoScore", "EEnonIsoScore[0]")
         )
-    
+   
     def define_regions(self, df, ch_name, mc):
         pho_late = f"(leadPhotonTimeSig > {self._threshs['late_timesig']})"
         pho_early = f"(leadPhotonTimeSig < {self._threshs['early_timesig']})"
@@ -292,11 +387,102 @@ class RJRAnalysis:
 
 
 
+
+
+
+    def doSignalEfficiencies(self, args):
+        mGl = args.mGl
+        mN2 = args.mN2
+        mN1 = args.mN1
+        ctau = args.ctau
+      
+        fileprocessor = FileProcessor()
+        for proc in args.proc:
+            selected_data = {}
+            procstr = self.GetProcessName(proc, mGl, mN2, mN1, ctau)
+            if "SMS" not in proc:
+                print("Can only do efficiencies for signal, doing efficiencies for",proc)
+                exit()
+            mc = True
+            if "PD" in proc:
+                mc = False
+            files = fileprocessor.GetFiles(proc, mGl, mN2, mN1, ctau)
+            for file in files:
+                print("file",file)
+                infilename = file
+                infilename = infilename[infilename.rfind("/")+1:infilename.rfind("_")]
+                infilename = infilename.replace("_","\_")
+                selected_data[infilename] = []
+
+                df00 = RDataFrame("kuSkimTree", file, self._branches)
+                df0 = df00.Filter("rjr_Rs.size() > 0 && rjr_Ms.size() > 0") #in case these have size 0, can lead to undefined behavior
+                df = (
+                    df0.Define("rjr_Rs0", "rjr_Rs[0]")
+                      .Define("rjr_Ms0", "rjr_Ms[0]")
+                )
+    
+                df1 = self.define_photon_quantities(df, self._threshs)
+                #do individual presel cuts here so they are printed out
+                df_metcut = df1.Filter(self._metcut,self._metcut)
+                df_pts = df1.Filter(self._ptscut, self._ptscut)
+                df_triggers = df1.Filter(self._triggers,"triggers")
+                df_filters = df1.Filter(self._met_filters,"met_filters")
+    
+                #do all presel cuts
+                df_presel = self.apply_preselection(df1)
+    
+                channels = self.define_channels(df_presel)
+   
+                df_list = [df_presel]
+                region_list = []
+                for ch_name, df_ch in channels.items():
+                    print(" doing channel",ch_name)
+                    df_ch = self.define_lead_photon_vars(df_ch) #done in define channels
+                    regions = self.define_regions(df_ch, ch_name, mc)
+                    region_list.append(regions)
+
+                report = df00.Report()
+                # select cuts
+                lines = report2str(report)
+                for line in lines:
+                    parsed_eff = parse_eff_line(line)
+                    if parsed_eff is None:
+                        continue
+                    selected_data[infilename].append(parsed_eff) 
+            # write LaTeX table
+            outfile = f"{procstr}_eff_table.tex"
+            write_latex_table(outfile, selected_data)
+            print("Wrote efficiencies for process",proc,"to",outfile) 
+
+    def GetProcessName(self, proc, mGl = None, mN2 = None, mN1 = None, ctau = None):
+        procstr = proc
+        if proc == "METPD":
+            procstr = "METFullRunII"   
+        if "SMS" in proc: #assume only one mass point given
+            if mGl is not None:
+                procstr += "mGl"+mGl
+            else:
+                procstr += "mGlAll"
+            if mN2 is not None:
+                procstr += "mN2"+mN2
+            else:
+                procstr += "mN2All"
+            if mN1 is not None:
+                procstr += "mN1"+mN1
+            else:
+                procstr += "mN1All"
+            if ctau is not None:
+                procstr += "ct"+ctau
+            else:
+                procstr += "ctAll"
+        return procstr
+
 # -------------------------
 # Main analysis
 # -------------------------
 
     def runRJRAnalysis(self, args, ofilename_extra: str = ""):
+        #self.define_region_selection_root_functions() 
         procs = args.proc
         mGl = args.mGl
         mN2 = args.mN2
@@ -310,30 +496,12 @@ class RJRAnalysis:
         ofilename = ""
         hists1d, hists2d = [], []
         for proc in procs:
-            procstr = proc
-            if proc == "METPD":
-                procstr = "METFullRunII"   
+            procstr = self.GetProcessName(proc, mGl, mN2, mN1, ctau)
             files = []
             if "SMS" in proc: #assume only one mass point given
                 files += fileprocessor.GetFiles(proc, mGl, mN2, mN1, ctau)
                 if "gogoGZ" in files[0] and "skims_v46" in files[0]: #only do for skims_v46 gogoGZ signal samples
                     checkForBadWgts = True
-                if mGl is not None:
-                    procstr += "mGl"+mGl
-                else:
-                    procstr += "mGlAll"
-                if mN2 is not None:
-                    procstr += "mN2"+mN2
-                else:
-                    procstr += "mN2All"
-                if mN1 is not None:
-                    procstr += "mN1"+mN1
-                else:
-                    procstr += "mN1All"
-                if ctau is not None:
-                    procstr += "ct"+ctau
-                else:
-                    procstr += "ctAll"
             else: 
                 files += fileprocessor.GetFiles(proc)
             if len(files) == 0:
@@ -370,13 +538,13 @@ class RJRAnalysis:
                 )
                 has_bad = n_bad > 0
                 if has_bad:
+                    print("Bad weights - setting all weights to 1")
                     df = df.Redefine("evtFillWgt", "1")
 
             df0 = (
                 df.Define("rjr_Rs0", "rjr_Rs[0]")
                   .Define("rjr_Ms0", "rjr_Ms[0]")
             )
-    
             df1 = self.define_photon_quantities(df0, self._threshs)
             #do individual presel cuts here so they are printed out
             df_metcut = df1.Filter(self._metcut,self._metcut)
@@ -390,11 +558,11 @@ class RJRAnalysis:
             #print_photon_efficiencies(df_presel)
     
             channels = self.define_channels(df_presel)
-    
+   
             df_list = [df_presel]
             for ch_name, df_ch in channels.items():
                 #print(" doing channel",ch_name)
-                df_ch = self.define_lead_photon_vars(df_ch)
+                df_ch = self.define_lead_photon_vars(df_ch) #done in define channels
     
                 regions = self.define_regions(df_ch, ch_name, mc)
                 hists1d.append(
@@ -424,8 +592,8 @@ class RJRAnalysis:
                         hists1d, hists2d
                     )
                     df_list.append(df_reg)
-   
             df.Report().Print() #triggers event loop with Print() call dereferencing 
+            exit() 
         #process loop end
     
     
@@ -501,12 +669,23 @@ if __name__ == "__main__":
         help="Extra string appended to output filename"
     )
 
-    
+   
+    parser.add_argument(
+        '--doPerFileEffs',
+        help='show efficiencies per file',
+        action='store_true',
+        default=False
+    )
+ 
     args = parser.parse_args()
 
     #event histograms (ie yields, Ms, Rs, time sig, etc) are weighted
     #object histograms (ie photon scores, etc) are not
     rjrana = RJRAnalysis()
+
+    if args.doPerFileEffs:
+        rjrana.doSignalEfficiencies(args)
+        exit()
 
     rjrana.runRJRAnalysis(
         args,
