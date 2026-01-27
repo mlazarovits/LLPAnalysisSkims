@@ -218,11 +218,10 @@ class RJRAnalysis:
         print("BH eff:", 100 * npho_bh / npho, "%")
     
     def define_channels(self, df):
-        return {
-            "1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
-            "ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
-        }
-        '''
+        #return {
+        #    "1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
+        #    "ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
+        #}
         df_1pho = df.Filter("nSelPhotons == 1", "1nSelPho")
         df_ge2pho = df.Filter("nSelPhotons >= 2", "ge2nSelPho")
       
@@ -240,7 +239,6 @@ class RJRAnalysis:
             "1pho": df_1pho,
             "ge2pho": df_ge2pho,
         }
-        ''' 
     
     def define_lead_photon_vars(self, df):
         return (
@@ -437,7 +435,6 @@ class RJRAnalysis:
                 region_list = []
                 for ch_name, df_ch in channels.items():
                     print(" doing channel",ch_name)
-                    df_ch = self.define_lead_photon_vars(df_ch) #done in define channels
                     regions = self.define_regions(df_ch, ch_name, mc)
                     region_list.append(regions)
 
@@ -562,8 +559,6 @@ class RJRAnalysis:
             df_list = [df_presel]
             for ch_name, df_ch in channels.items():
                 #print(" doing channel",ch_name)
-                df_ch = self.define_lead_photon_vars(df_ch) #done in define channels
-    
                 regions = self.define_regions(df_ch, ch_name, mc)
                 hists1d.append(
                     df_ch.Histo1D(
@@ -593,7 +588,6 @@ class RJRAnalysis:
                     )
                     df_list.append(df_reg)
             df.Report().Print() #triggers event loop with Print() call dereferencing 
-            exit() 
         #process loop end
     
     

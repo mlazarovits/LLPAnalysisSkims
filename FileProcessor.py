@@ -94,6 +94,10 @@ class FileProcessor():
             path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018C_rjrskim_v45.root",
             path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018D_rjrskim_v45.root",
         ]
+
+        self._procFiles["METPD_test"] = [
+           path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim_v45.root"
+        ]
         
         path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/"
         self._procFiles["QCD"] = [
