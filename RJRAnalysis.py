@@ -64,7 +64,6 @@ def report2str(report):
         eff = ci.GetEff()
         cumulativeEff = 100.0 * float(pass_val) / float(allEntries) if allEntries > 0 else 0.0
         result+=[f"{name:10}: pass={pass_val:<10} all={all:<10} -- eff={eff:.2f} % cumulative eff={cumulativeEff:.2f} %"]
-    print(result)
     return result
 
 def parse_eff_line(line):
@@ -122,8 +121,10 @@ class RJRAnalysis:
             "bh": "0.917252",
             "pb": "0.81476355",
             "EE_nonIso": "0.9290591",
+            "EB_nonIso": "-1", #pending
             "EE_veryNonIso": "0.9939665",
             "EE_iso" : "0.9994431", #80% efficiency, 5% bkg contanimination from SMS-GlGl ROC 
+            "EB_iso" : "-1", #pending 
             "early_time": "-2",
             "late_time": "2",
             "prompt_time": "1",
@@ -156,187 +157,132 @@ class RJRAnalysis:
         self._msrs_bins["nonIsoEE"] = {"ms": array("d", [500, 1000, 2000, 5000]),"rs" :array("d", [0.0, 0.15, 0.4, 1.0]) }
         self._msrs_bins["isoEE"] = {"ms": array("d", [500, 1000, 2000, 5000]),"rs" :array("d", [0.0, 0.15, 0.4, 1.0]) }
 
-        
-    def define_photon_quantities(self, df, thr):
-        return (
-            df
-            .Define(
-                "EEnonIsoScore",
-                "selPho_nonIsoANNScore[(selPhoEta < -1.479) || (selPhoEta > 1.479)]"
-            )
-            .Define(
-                "nEndcapPhotons",
-                "selPhoEta[selPhoEta > 1.479 || selPhoEta < -1.479].size()"
-            )
-            .Define(
-                "nEndcapPhotons_nonIso",
-                f"selPho_nonIsoANNScore[(selPhoEta > 1.479 || selPhoEta < -1.479) && "
-                f"(selPho_nonIsoANNScore > {self._threshs['EE_nonIso']})].size()"
-            )
-            .Define(
-                "nEndcapPhotons_veryNonIso",
-                f"EEnonIsoScore[EEnonIsoScore > {self._threshs['EE_veryNonIso']}].size()"
-            )
-            .Define(
-                "nBHPhotons",
-                f"selPho_beamHaloCNNScore[selPho_beamHaloCNNScore > {self._threshs['bh']}].size()"
-            )
+        #declare functions for defining photon CRs
+        #only works for 1 + >=2 photon channels rn
+        #returns index of tagged photon
+        #if ==1 photon: tag is based on lead selected photon
+        #if >1 photon: tag is based on lead photon of (lead, sublead) selected photons
+        gInterpreter.Declare(
+            """
+            using ROOT::RVecF;
+            int getTagIdx(const RVecF& scores, const float score_thresh){
+                if(scores.size() < 1){
+                    return -1;
+                }
+                else if(scores.size() == 1){
+                    if(scores[0] > score_thresh)
+                        return 0;
+                    else
+                        return -1; 
+                }
+                else{
+                    if(scores[0] > score_thresh)
+                        return 0;
+                    else{
+                        if(scores[1] > score_thresh)
+                            return 1;
+                        else
+                            return -1;
+
+                    }
+                }
+            }
+        """
         )
+        #TODO - barrel/endcap for >1 photon
+        '''
+        gInterpreter.Declare(
+            """
+            using ROOT::RVecF;
+            int getTagIdx(const RVecF& scores, const RVecF& eta, const float barrel_score_thresh, const float endcap_score_thresh){
+                if(scores.size() < 1){
+                    return -1;
+                }
+                else if(scores.size() == 1){
+                    float lead_eta = eta[0];
+                    if(fabs(lead_eta) < 1.479){
+                        if(barrel_score_thresh > barrel_score_thresh)
+                            return 0;
+                        else
+                            return -1; 
+                    }
+                    else{
+                        if(endcap_score_thresh > endcap_score_thresh)
+                            return 0;
+                        else
+                            return -1; 
+                    }
+                }
+                else{
+                    if(scores[0] > score_thresh)
+                        return 0;
+                    else{
+                        if(scores[1] > score_thresh)
+                            return 1;
+                        else
+                            return -1;
+
+                    }
+                }
+            }
+        """
+        )
+        ''' 
+        
     
     def apply_preselection(self, df):
         baseline = f"{self._metcut} && {self._ptscut} && {self._triggers} && {self._met_filters}"
         return df.Filter(baseline, "baseline")
     
     
-    def print_photon_efficiencies(self, df):
-        npho = df.Sum("nSelPhotons").GetValue()
-        npho_ee = df.Sum("nEndcapPhotons").GetValue()
-        npho_ee_noniso = df.Sum("nEndcapPhotons_nonIso").GetValue()
-        npho_ee_vnoniso = df.Sum("nEndcapPhotons_veryNonIso").GetValue()
-        npho_bh = df.Sum("nBHPhotons").GetValue()
-    
-        print("sum nSelPhotons:", npho)
-        print("sum nEndcapPhotons:", npho_ee)
-    
-        if npho_ee > 0:
-            print(
-                "EE nonIso eff:",
-                100 * npho_ee_noniso / npho_ee,
-                "%  total:",
-                100 * npho_ee_noniso / npho,
-                "%"
-            )
-    
-            print(
-                "EE veryNonIso eff:",
-                100 * npho_ee_vnoniso / npho_ee,
-                "%  total:",
-                100 * npho_ee_vnoniso / npho,
-                "%"
-            )
-    
-        print("BH eff:", 100 * npho_bh / npho, "%")
-    
     def define_channels(self, df):
-        #return {
-        #    "1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
-        #    "ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
-        #}
-        df_1pho = df.Filter("nSelPhotons == 1", "1nSelPho")
-        df_ge2pho = df.Filter("nSelPhotons >= 2", "ge2nSelPho")
-      
-        df_1pho = self.define_lead_photon_vars(df_1pho)
-        df_ge2pho = self.define_lead_photon_vars(df_ge2pho)
- 
-        #define sublead branches for ge2pho channel 
-        df_ge2pho = (df_ge2pho.Define("subleadPhotonBHScore", "selPho_beamHaloCNNScore[1]")
-            .Define("subleadPhotonPBScore", "selPho_physBkgCNNScore[1]")
-            .Define("subleadPhotonTime", "selPhoWTimeSig[1]")
-            .Define("subleadPhotonTimeSig", "selPhoWTime[1]")
-            .Define("subleadPhotonNonIsoScore", "selPho_nonIsoANNScore[1]")
-            .Define("subleadPhotonEEnonIsoScore", "EEnonIsoScore[1]"))
         return {
-            "1pho": df_1pho,
-            "ge2pho": df_ge2pho,
+            "1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
+            "ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho")
         }
     
-    def define_lead_photon_vars(self, df):
-        return (
-            df
-            .Define("leadPhotonBHScore", "selPho_beamHaloCNNScore[0]")
-            .Define("leadPhotonPBScore", "selPho_physBkgCNNScore[0]")
-            .Define("leadPhotonTime", "selPhoWTimeSig[0]")
-            .Define("leadPhotonTimeSig", "selPhoWTime[0]")
-            .Define("leadPhotonNonIsoScore", "selPho_nonIsoANNScore[0]")
-            .Define("leadPhotonEEnonIsoScore", "EEnonIsoScore[0]")
-        )
-   
     def define_regions(self, df, ch_name, mc):
-        pho_late = f"(leadPhotonTimeSig > {self._threshs['late_timesig']})"
-        pho_early = f"(leadPhotonTimeSig < {self._threshs['early_timesig']})"
-        pho_prompt = (
-            f"(leadPhotonTimeSig < {self._threshs['prompt_timesig']} && "
-            f"leadPhotonTimeSig > -{self._threshs['prompt_timesig']})"
-        )
-    
+        #test custom filters
+        df_regidxs = (df
+                        .Define("selPhoIdx_BHTag",f"getTagIdx(selPho_beamHaloCNNScore,{self._threshs['bh']})")
+                        .Define("selPhoIdx_PBTag",f"getTagIdx(selPho_physBkgCNNScore,{self._threshs['pb']})")
+                        .Define("selPhoIdx_EEnonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,{self._threshs['EE_nonIso']})")
+                        .Define("selPhoIdx_EEIsoTag",f"getTagIdx(selPho_isoANNScore,{self._threshs['EE_iso']})")
+                        #w/ barrel #.Define("selPhoIdx_nonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,selPhoEta,{self._threshs['EE_nonIso']})")
+                        #w/ barrel #.Define("selPhoIdx_IsoTag",f"getTagIdx(selPho_isoANNScore,selPhoEta, {self._threshs['EE_iso']})")
+                    )
+
+        #df_regidxs.Filter("selPhoIdx_EEIsoTag == 1").Display(["selPhoIdx_EEIsoTag","selPho_isoANNScore","selPhoPt","selPhoWTimeSig"],45).Print()
+        #df_regidxs.Filter("selPhoIdx_PBTag != 0 && selPhoIdx_PBTag != -1").Display(["selPhoIdx_PBTag"]).Print()
+
         regions = {
-            "BHCR": df.Filter(
-                f"leadPhotonBHScore > {self._threshs['bh']}",
-                f"leadPhoBHTag_{ch_name}"
+            "earlyBHCR": df_regidxs.Filter(
+                f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] < {self._threshs['early_timesig']}",
+                f"earlyBHCR_{ch_name}"
             ),
-            "earlyBHCR": df.Filter(
-                f"leadPhotonBHScore > {self._threshs['bh']} && {pho_early}",
-                f"leadPhoBHTag_early_{ch_name}"
+            "lateBHCR": df_regidxs.Filter(
+                f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] > {self._threshs['late_timesig']}",
+                f"lateBHCR_{ch_name}"
             ),
-            "lateBHCR": df.Filter(
-                f"leadPhotonBHScore > {self._threshs['bh']} && {pho_late}",
-                f"leadPhoBHTag_late_{ch_name}"
+            "nonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
+                f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_isoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']}",
+                f"nonIsoEECR_{ch_name}"
+            ),
+            "verynonIsoEECR": df_regidxs.Filter( #score needs to pass EE_veryNonIso thresh
+                f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_isoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']}",
+                f"verynonIsoEECR_{ch_name}"
             ),
         }
-    
-        # EE non-iso CRs
-        if "ge2pho" not in ch_name:
-            eeNonIso = (
-                #f"(selPho_nonIsoANNScore[0] > {self._threshs['EE_nonIso']}) && "
-                f"(selPho_nonIsoANNScore[0] > {self._threshs['EE_nonIso']} && selPho_nonIsoANNScore[0] < {self._threshs['EE_veryNonIso']}) && "
-                f"(selPhoEta[0] < -1.479 || selPhoEta[0] > 1.479) && "
-                f"{pho_prompt}"
-            )
-            eeVeryNonIso = (
-                f"(selPho_nonIsoANNScore[0] > {self._threshs['EE_veryNonIso']}) && "
-                f"(selPhoEta[0] < -1.479 || selPhoEta[0] > 1.479) && "
-                f"{pho_prompt}"
-            )
-        else:
-            sub_prompt = (
-                f"(selPhoWTimeSig[1] > -{self._threshs['prompt_timesig']} && "
-                f"selPhoWTimeSig[1] < {self._threshs['prompt_timesig']})"
-            )
-    
-            lead_nonIso = (
-                f"((selPho_nonIsoANNScore[0] > {self._threshs['EE_nonIso']}) && "
-                f"(selPhoEta[0] < -1.479 || selPhoEta[0] > 1.479) && {pho_prompt})"
-            )
-    
-            sub_nonIso = (
-                f"((selPho_nonIsoANNScore[1] > {self._threshs['EE_nonIso']}) && "
-                f"(selPhoEta[1] < -1.479 || selPhoEta[1] > 1.479) && {sub_prompt})"
-            )
-            sub_notvnonIso = ( 
-                f"((selPho_nonIsoANNScore[1] < {self._threshs['EE_veryNonIso']}) && "
-                f"(selPhoEta[1] < -1.479 || selPhoEta[1] > 1.479) && {sub_prompt})"
-            )
-    
-            lead_vnonIso = lead_nonIso.replace(self._threshs['EE_nonIso'], self._threshs['EE_veryNonIso'])
-            sub_vnonIso = sub_nonIso.replace(self._threshs['EE_nonIso'], self._threshs['EE_veryNonIso'])
-            #if wanting to include sublead photon, make sure the definitions are orthogonal bw nonIso and VeryNonIso
-            #eeNonIso = f"{lead_nonIso} && {sub_notvnonIso}"
-            #eeVeryNonIso = f"{lead_vnonIso} || {sub_vnonIso}"
-            eeNonIso = f"{lead_nonIso}"# || {sub_nonIso}"
-            eeVeryNonIso = f"{lead_vnonIso}"# || {sub_vnonIso}"
-        #print("channel:",ch_name,"\n  eeNonIso",eeNonIso,"\n  eeVeryNonIso",eeVeryNonIso)
-        regions["nonIsoEECR"] = df.Filter(
-            eeNonIso, f"leadPhoEEnonIsoTag_{ch_name}"
-        )
-        regions["verynonIsoEECR"] = df.Filter(
-            eeVeryNonIso, f"leadPhoEEVeryNonIsoTag_{ch_name}"
-        )
-    
         #if MC, define PB early/late regions and iso SRs
         if mc:
-            pbEarly = f"leadPhotonPBScore > {self._threshs['pb']} && {pho_early}"
-            pbLate = f"leadPhotonPBScore > {self._threshs['pb']} && {pho_late}"
-            regions["earlyPBCR"] = df.Filter(pbEarly, f"leadPhoPBTag_early_{ch_name}")
-            regions["latePBSR"] = df.Filter(pbLate, f"leadPhoPBTag_late_{ch_name}")
+            pbEarly = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] < {self._threshs['early_timesig']}"
+            pbLate = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] > {self._threshs['late_timesig']}"
+            regions["earlyPBCR"] = df_regidxs.Filter(pbEarly, f"earlyPBCR_{ch_name}")
+            regions["latePBSR"] = df_regidxs.Filter(pbLate, f"latePBSR_{ch_name}")
     
-            lead_eeIso = (
-                f"((selPho_isoANNScore[0] > {self._threshs['EE_iso']}) && "
-                f"(selPhoEta[0] < -1.479 || selPhoEta[0] > 1.479) && {pho_prompt})"
-            )
-            regions["isoEESR"] = df.Filter(lead_eeIso,f"leadPhoEEIso_prompt_{ch_name}")
-    
+            eeIso = f"selPhoIdx_EEIsoTag != -1 &&  selPhoWTimeSig[selPhoIdx_EEIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEIsoTag] < {self._threshs['prompt_timesig']}"
+            regions["isoEESR"] = df_regidxs.Filter(eeIso,f"isoEESR_{ch_name}")
         return regions
-    
     
     def fill_region_hists(self, df, proc_name, reg_name, ch_name, h1d, h2d):
         reg_name_key = next(k for k in self._msrs_bins if k in reg_name)
@@ -388,7 +334,7 @@ class RJRAnalysis:
 
 
 
-    def doSignalEfficiencies(self, args):
+    def doSignalEfficiencies(self, args, show_output=False):
         mGl = args.mGl
         mN2 = args.mN2
         mN1 = args.mN1
@@ -414,12 +360,11 @@ class RJRAnalysis:
 
                 df00 = RDataFrame("kuSkimTree", file, self._branches)
                 df0 = df00.Filter("rjr_Rs.size() > 0 && rjr_Ms.size() > 0") #in case these have size 0, can lead to undefined behavior
-                df = (
+                df1 = (
                     df0.Define("rjr_Rs0", "rjr_Rs[0]")
                       .Define("rjr_Ms0", "rjr_Ms[0]")
                 )
     
-                df1 = self.define_photon_quantities(df, self._threshs)
                 #do individual presel cuts here so they are printed out
                 df_metcut = df1.Filter(self._metcut,self._metcut)
                 df_pts = df1.Filter(self._ptscut, self._ptscut)
@@ -442,14 +387,19 @@ class RJRAnalysis:
                 # select cuts
                 lines = report2str(report)
                 for line in lines:
+                    if(show_output):
+                        print(line)
                     parsed_eff = parse_eff_line(line)
                     if parsed_eff is None:
                         continue
                     selected_data[infilename].append(parsed_eff) 
             # write LaTeX table
-            outfile = f"{procstr}_eff_table.tex"
+            outfile = f"{procstr}_eff_table"
+            if args.ofilename_extra is not None:
+                outfile += f"_{args.ofilename_extra}"
+            outfile += ".tex" 
             write_latex_table(outfile, selected_data)
-            print("Wrote efficiencies for process",proc,"to",outfile) 
+            print("Wrote efficiencies for process",proc,"to",outfile)
 
     def GetProcessName(self, proc, mGl = None, mN2 = None, mN1 = None, ctau = None):
         procstr = proc
@@ -479,7 +429,6 @@ class RJRAnalysis:
 # -------------------------
 
     def runRJRAnalysis(self, args, ofilename_extra: str = ""):
-        #self.define_region_selection_root_functions() 
         procs = args.proc
         mGl = args.mGl
         mN2 = args.mN2
@@ -538,11 +487,10 @@ class RJRAnalysis:
                     print("Bad weights - setting all weights to 1")
                     df = df.Redefine("evtFillWgt", "1")
 
-            df0 = (
+            df1 = (
                 df.Define("rjr_Rs0", "rjr_Rs[0]")
                   .Define("rjr_Ms0", "rjr_Ms[0]")
             )
-            df1 = self.define_photon_quantities(df0, self._threshs)
             #do individual presel cuts here so they are printed out
             df_metcut = df1.Filter(self._metcut,self._metcut)
             df_pts = df1.Filter(self._ptscut, self._ptscut)
@@ -558,7 +506,7 @@ class RJRAnalysis:
    
             df_list = [df_presel]
             for ch_name, df_ch in channels.items():
-                #print(" doing channel",ch_name)
+                print(" doing channel",ch_name)
                 regions = self.define_regions(df_ch, ch_name, mc)
                 hists1d.append(
                     df_ch.Histo1D(
@@ -671,6 +619,13 @@ if __name__ == "__main__":
         default=False
     )
  
+    parser.add_argument(
+        '--showOutput',
+        help='print efficiencies per file',
+        action='store_true',
+        default=False
+    )
+
     args = parser.parse_args()
 
     #event histograms (ie yields, Ms, Rs, time sig, etc) are weighted
@@ -678,7 +633,7 @@ if __name__ == "__main__":
     rjrana = RJRAnalysis()
 
     if args.doPerFileEffs:
-        rjrana.doSignalEfficiencies(args)
+        rjrana.doSignalEfficiencies(args,args.showOutput)
         exit()
 
     rjrana.runRJRAnalysis(
