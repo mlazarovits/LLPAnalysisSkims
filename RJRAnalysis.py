@@ -370,7 +370,7 @@ class RJRAnalysis:
                 )
                 has_bad = n_bad > 0
                 if has_bad:
-                    df = df.Define("evtFillWgt", "1")
+                    df = df.Redefine("evtFillWgt", "1")
 
             df0 = (
                 df.Define("rjr_Rs0", "rjr_Rs[0]")
