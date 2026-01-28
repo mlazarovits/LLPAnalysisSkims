@@ -1,4 +1,5 @@
 from ROOT import RDataFrame, TChain, TFile, TH1, TH2, gInterpreter
+from tools import EfficiencyParser
 import sys
 import argparse
 import os
@@ -15,83 +16,11 @@ TH1.SetDefaultSumw2(True)
 TH2.SetDefaultSumw2(True)
 
 
-
-def add_dollar_to_inequalities(s):
-    """
-    Finds all simple inequalities in a string and wraps them in $...$.
-    Example: "rjrPTS[0] < 150" -> "rjrPTS[0] $< 150$"
-    """
-    # pattern: operator optionally preceded by whitespace, then a number or variable
-    pattern = r"(\s*(<=|>=|<|>|==|!=)\s*[^&|]+)"
-    
-    # replace matches with $...$
-    result = re.sub(pattern, lambda m: f" ${m.group(1).strip()}$ ", s)
-    
-    # clean extra spaces
-    result = re.sub(r"\s+", " ", result).strip()
-    
-    return result
-
-
-
-def write_latex_table(output_path, selected_data):
-    with open(output_path, "w") as f:
-        for infile, data in selected_data.items():
-            f.write("\\begin{table}\n")
-            f.write("\\centering\n")
-            f.write("\\caption{"+infile+"}\n")
-            f.write("\\begin{tabular}{l c c}\n")
-            f.write("\\hline\n")
-            f.write("Cut & Entries & Efficiency (\\%)\\\\\n")
-            f.write("\\hline\n")
-            for label, entries, eff in data:
-                if ">" in label or "<" in label:
-                    label = add_dollar_to_inequalities(label)
-                f.write(f"{label} & {int(entries)} & {eff:.3f} \\\\\n")
-            f.write("\\hline\n")
-            f.write("\\end{tabular}\n")
-            f.write("\\end{table}\n\n")
-
-def report2str(report):
-    begin = report.begin()
-    if begin == report.end(): return ""
-    allEntries = begin.GetAll()
-    result = []
-    for ci in report:
-        name = ci.GetName()
-        pass_val = ci.GetPass()
-        all = ci.GetAll()
-        eff = ci.GetEff()
-        cumulativeEff = 100.0 * float(pass_val) / float(allEntries) if allEntries > 0 else 0.0
-        result+=[f"{name:10}: pass={pass_val:<10} all={all:<10} -- eff={eff:.2f} % cumulative eff={cumulativeEff:.2f} %"]
-    return result
-
-def parse_eff_line(line):
-    # line is like: "cutName: 1234 (0.567)"
-    # split by ':' first
-    if ':' not in line:
-        return None
-    name, rest = line.split(':', 1)
-    name = name.strip()
-    # rest has entries and efficiency
-    parts = rest.strip().split()
-    if len(parts) < 2:
-        return None
-    pass_entries = parts[0]
-    pass_entries = pass_entries[pass_entries.find("=")+1:]
-    n_entries = int(pass_entries)
-    eff_perc = parts[3]
-    eff_perc = eff_perc[eff_perc.find("=")+1:]
-    eff = float(eff_perc)
-  
-    #for latex 
-    name = name.replace("_","\_")
-    return name, n_entries, eff
-
 class RJRAnalysis:
     def __init__(self):
+        self._eff_parser = EfficiencyParser()
         self._branches = [
-            "rjr_Rs","rjr_Ms","selCMet","rjrPTS",
+            "rjr_Rs","rjr_Ms","selCMet","rjrPTS","rjrIsr_PtIsr","rjrIsr_Rs",
             "evtFillWgt",
             "Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60",
             "Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight",
@@ -122,7 +51,8 @@ class RJRAnalysis:
             "pb": "0.81476355",
             "EE_nonIso": "0.9290591",
             "EB_nonIso": "-1", #pending
-            "EE_veryNonIso": "0.9939665",
+            #"EE_veryNonIso": "0.9939665",
+            "EE_veryNonIso": "0.97",
             "EE_iso" : "0.9994431", #80% efficiency, 5% bkg contanimination from SMS-GlGl ROC 
             "EB_iso" : "-1", #pending 
             "early_time": "-2",
@@ -152,10 +82,13 @@ class RJRAnalysis:
         )
         #beam halo CR bins - limited stats regime
         self._msrs_bins = {}
-        self._msrs_bins["BHCR"] = {"ms" : array("d", [700, 5000]), "rs": array("d", [0.15, 0.3, 1.0])}
-        self._msrs_bins["PB"] = {"ms" : array("d", [700, 5000]), "rs": array("d", [0.15, 0.3, 1.0])}
-        self._msrs_bins["nonIsoEE"] = {"ms": array("d", [500, 1000, 2000, 5000]),"rs" :array("d", [0.0, 0.15, 0.4, 1.0]) }
-        self._msrs_bins["isoEE"] = {"ms": array("d", [500, 1000, 2000, 5000]),"rs" :array("d", [0.0, 0.15, 0.4, 1.0]) }
+        self._msrs_bins["1pho"] =   {"ms" : array("d", [200, 800, 10000]), "rs": array("d", [0.15, 1.0])}
+        self._msrs_bins["ge2pho"] = {"ms" : array("d", [200, 800, 10000]), "rs": array("d", [0.15, 1.0])}
+        self._msrs_bins["BHCR"] = {"ms" : array("d", [700, 1000, 10000]), "rs": array("d", [0.15, 1.0])}
+        self._msrs_bins["PBCR"] = {"ms" : array("d", [700, 1000, 10000]), "rs": array("d", [0.15, 1.0])}
+        self._msrs_bins["PBSR"] = {"ms" : array("d", [700, 1000, 10000]), "rs": array("d", [0.15, 0.3, 1.0])}
+        self._msrs_bins["nonIsoEECR"] = {"ms": array("d", [700, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
+        self._msrs_bins["isoEESR"] = {"ms": array("d", [500, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
 
         #declare functions for defining photon CRs
         #only works for 1 + >=2 photon channels rn
@@ -237,8 +170,11 @@ class RJRAnalysis:
     
     def define_channels(self, df):
         return {
-            "1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
-            "ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho")
+            #"1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
+            "1pho": df.Filter("nSelPhotons == 1 && SV_nLeptonic == 0 && SV_nHadronic == 0", "1nSelPho"),
+            #"ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
+            "ge2pho": df.Filter("nSelPhotons >= 2 && SV_nLeptonic == 0 && SV_nHadronic == 0", "ge2nSelPho"),
+            "1pho1HadSV" : df.Filter("nSelPhotons == 1 && SV_nHadronic == 1 && SV_nLeptonic == 0","1nSelPho1HadSV")
         }
     
     def define_regions(self, df, ch_name, mc):
@@ -253,8 +189,11 @@ class RJRAnalysis:
                     )
 
         #df_regidxs.Filter("selPhoIdx_EEIsoTag == 1").Display(["selPhoIdx_EEIsoTag","selPho_isoANNScore","selPhoPt","selPhoWTimeSig"],45).Print()
-        #df_regidxs.Filter("selPhoIdx_PBTag != 0 && selPhoIdx_PBTag != -1").Display(["selPhoIdx_PBTag"]).Print()
 
+        ee_nonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']}" 
+        ee_verynonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']}" 
+        print(f"EE_nonIso cut: {ee_nonIsoCut}")
+        print(f"EE_veryNonIso cut: {ee_verynonIsoCut}")
         regions = {
             "earlyBHCR": df_regidxs.Filter(
                 f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] < {self._threshs['early_timesig']}",
@@ -265,11 +204,11 @@ class RJRAnalysis:
                 f"lateBHCR_{ch_name}"
             ),
             "nonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
-                f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_isoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']}",
+                ee_nonIsoCut,
                 f"nonIsoEECR_{ch_name}"
             ),
             "verynonIsoEECR": df_regidxs.Filter( #score needs to pass EE_veryNonIso thresh
-                f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_isoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']}",
+                ee_verynonIsoCut,
                 f"verynonIsoEECR_{ch_name}"
             ),
         }
@@ -282,13 +221,23 @@ class RJRAnalysis:
     
             eeIso = f"selPhoIdx_EEIsoTag != -1 &&  selPhoWTimeSig[selPhoIdx_EEIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEIsoTag] < {self._threshs['prompt_timesig']}"
             regions["isoEESR"] = df_regidxs.Filter(eeIso,f"isoEESR_{ch_name}")
+            #do inclusive object-multiplicity-defined region
+            regions[ch_name] = df_regidxs 
         return regions
-    
+   
+    def do_ms_rs_cuts(self, df, reg_name):
+        reg_name_key = next(k for k in self._msrs_bins if k in reg_name)
+        return df.Filter(f"rjr_Rs0 > {self._msrs_bins[reg_name_key]['rs'][0]}").Filter(f"rjr_Ms0 > {self._msrs_bins[reg_name_key]['ms'][0]}")
+ 
     def fill_region_hists(self, df, proc_name, reg_name, ch_name, h1d, h2d):
         reg_name_key = next(k for k in self._msrs_bins if k in reg_name)
         msbins = self._msrs_bins[reg_name_key]['ms']
         rsbins = self._msrs_bins[reg_name_key]['rs']
-        
+       
+        if "CR" in reg_name:
+            msmax = 2000
+        else:
+            msmax = 10000 
         n_msbins = len(msbins) - 1
         n_rsbins = len(rsbins) - 1
    
@@ -303,21 +252,29 @@ class RJRAnalysis:
         h2d.append(
             df.Histo2D(
 	            (f"MsRs_{proc_name}_{ch_name}_{reg_name}", ";Ms;Rs",
-                 50, 0, 5000, 50, 0, 1.01),
+                 20, msbins[0], msmax, 20, rsbins[0], rsbins[-1]+0.01),
                 "rjr_Ms0", "rjr_Rs0", "evtFillWgt"
+            )
+        )
+        #compressed kinematics
+        h2d.append(
+            df.Histo2D(
+	            (f"RsPtISR_{proc_name}_{ch_name}_{reg_name}", ";Rs;ptISR",
+                 20, 0, rsbins[-1]+0.01, 20, 0, 1000),
+                "rjrIsr_Rs", "rjrIsr_PtIsr", "evtFillWgt"
             )
         )
    
         h1d.append(
             df.Histo1D(
-	            (f"Rs_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
+	            (f"Rs_{proc_name}_{ch_name}_{reg_name}", "", 50, rsbins[0], rsbins[-1]+0.01),
                 "rjr_Rs0", "evtFillWgt"
             )
         )
    	
         h1d.append(
             df.Histo1D(
-	            (f"Ms_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 5000),
+	            (f"Ms_{proc_name}_{ch_name}_{reg_name}", "", 50, msbins[0], msbins[-1]),
                 "rjr_Ms0", "evtFillWgt"
             )
         )
@@ -373,7 +330,7 @@ class RJRAnalysis:
     
                 #do all presel cuts
                 df_presel = self.apply_preselection(df1)
-    
+   
                 channels = self.define_channels(df_presel)
    
                 df_list = [df_presel]
@@ -385,20 +342,23 @@ class RJRAnalysis:
 
                 report = df00.Report()
                 # select cuts
-                lines = report2str(report)
+                lines = self._eff_parser.report2str(report)
+                denom_info = self._eff_parser.get_denom_line(lines, 'baseline')
                 for line in lines:
-                    if(show_output):
-                        print(line)
-                    parsed_eff = parse_eff_line(line)
+                    parsed_eff = self._eff_parser.parse_eff_line(line, denom_info)
                     if parsed_eff is None:
                         continue
+                    else:
+                        if(show_output):
+                            print(line)
+                            print("parsed_eff",parsed_eff)
                     selected_data[infilename].append(parsed_eff) 
             # write LaTeX table
             outfile = f"{procstr}_eff_table"
             if args.ofilename_extra is not None:
                 outfile += f"_{args.ofilename_extra}"
             outfile += ".tex" 
-            write_latex_table(outfile, selected_data)
+            eff_parser.write_latex_table(outfile, selected_data)
             print("Wrote efficiencies for process",proc,"to",outfile)
 
     def GetProcessName(self, proc, mGl = None, mN2 = None, mN1 = None, ctau = None):
@@ -508,34 +468,23 @@ class RJRAnalysis:
             for ch_name, df_ch in channels.items():
                 print(" doing channel",ch_name)
                 regions = self.define_regions(df_ch, ch_name, mc)
-                hists1d.append(
-                    df_ch.Histo1D(
-                        (f"leadPhotonBHdiscrScore_{procstr}_{ch_name}", "", 50, 0, 1.01),
-                        "leadPhotonBHScore"
-                    )
-                )
-                
-                hists1d.append(
-                    df_ch.Histo1D(
-                        (f"leadPhotonPBdiscrScore_{procstr}_{ch_name}", "", 50, 0, 1.01),
-                        "leadPhotonPBScore"
-                    )
-                )
-    
-                hists1d.append(
-                    df_ch.Histo1D(
-                        (f"leadPhotonTimeSig_{procstr}_{ch_name}", "", 50, -5, 5),
-                        "leadPhotonTimeSig"
-                    )
-                )
                 for reg_name, df_reg in regions.items():
                     #print("  doing region", reg_name)
+                    #define columns with lowest Rs/Ms cuts
+                    self.do_ms_rs_cuts(df_reg, reg_name)
                     self.fill_region_hists(
-                        df_reg, proc, reg_name, ch_name,
+                        df_reg, procstr, reg_name, ch_name,
                         hists1d, hists2d
                     )
                     df_list.append(df_reg)
-            df.Report().Print() #triggers event loop with Print() call dereferencing 
+            report = df00.Report() 
+            if(args.showOutput):
+                # select cuts
+                lines = self._eff_parser.report2str(report)
+                for line in lines:
+                    print(line)
+            else:
+                report.Print() #triggers event loop with Print() call dereferencing
         #process loop end
     
     
