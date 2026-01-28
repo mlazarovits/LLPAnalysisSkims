@@ -66,7 +66,8 @@ class UnrollMaker:
             'height': 600,
             'bottom_margin': 0.15,
             'left_margin': 0.08,
-            'right_margin': 0.28
+            'right_margin': 0.28,
+            'top_margin': 0.1
         }
 
     def _add_global_label(self, overlay_pad: ROOT.TPad, global_label: str, x_pos: float = 0.55, y_pos: float = 0.915):
@@ -98,6 +99,7 @@ class UnrollMaker:
                             self.unrolled_canvas_config['height'])
         
         # Set margins (bottom, left, and right)
+        canvas.SetTopMargin(self.unrolled_canvas_config['top_margin'])
         canvas.SetBottomMargin(self.unrolled_canvas_config['bottom_margin'])
         canvas.SetLeftMargin(self.unrolled_canvas_config['left_margin'])
         canvas.SetRightMargin(self.unrolled_canvas_config['right_margin'])
