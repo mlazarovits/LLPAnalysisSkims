@@ -104,7 +104,7 @@ class PlotFormatHelper:
             set.intersection(*selections)
             if selections else self._all_hists
         )
-        ret_hists = [self._file[name] for name in names]
+        ret_hists = [self._file[name] for name in names if self._file[name].Integral() > 0]
         if histtype is not None:
             for hist in ret_hists:
                 name = hist.GetName()+"_"+histtype
@@ -713,6 +713,7 @@ class PlotFormatter():
         # Create first histogram as invisible for axis setup
         axis_hist = histograms[0].Clone(f"{name}_axis_template")
         axis_hist.SetMaximum(max_val * 5.)  # 5x headroom for log scale
+        axis_hist.SetMinimum(1e-2)  # 5x headroom for log scale
         axis_hist.SetLineColor(0)  # Invisible
         axis_hist.SetMarkerSize(0)  # No markers
         axis_hist.SetFillStyle(0)  # No fill
@@ -842,7 +843,7 @@ class PlotFormatter():
         group_labels = []
         for l in ybins:
             print("ylabel",l)
-            label = ylabel + "#in" +interval_to_label(l)
+            label = ylabel + " #in " +interval_to_label(l)
             group_labels.append(label)
         text_objects = unroll_maker.add_group_labels(canvas, group_labels, binning_scheme=binning_scheme)
 
