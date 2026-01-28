@@ -11,26 +11,14 @@ import numpy as np
 
 ROOT.gStyle.SetOptStat(0000)
 #make dictionary for label names for regions, channels, etc
-labels_dict = {
-    "ge2pho" : "#geq 2 #gamma",
-    "1pho" : "1 #gamma",
-    "nonIsoEECR" : "Prompt EE nonIso CR",
-    "verynonIsoEECR" : "Prompt EE veryNonIso CR",
-    "BHCR_long" : "Beam Halo CR",
-    "earlyBHCR_long" : "Early Beam Halo CR",
-    "lateBHCR_long" : "Late Beam Halo CR",
-    "isoEESR" : "Prompt Iso SR",
-    "earlyPBCR" : "Early !Beam Halo CR",
-    "latePBCR" : "Late !Beam Halo SR",
-    "METPD" : "MET PD Run II",
-    "MET18" : "MET PD 2018",
-    "MET17" : "MET PD 2017",
-    "MET16" : "MET PD 2016",
-    "Prompt EE nonIso CR" : "_{t0}^{CR,!Iso}",
-    "Prompt EE veryNonIso CR" : "_{t0}^{CR,V!Iso}",
-    "earlyBHCR" : "_{t-}^{CR, BH}",
-    "lateBHCR" : "_{t+}^{CR, BH}"
-}
+def get_signal_label(inlabel):
+    sig_model = inlabel[:inlabel.find("mGl")]
+    mgl = inlabel[inlabel.find("mGl")+3:inlabel.find("mN2")]
+    mn2 = inlabel[inlabel.find("mN2")+3:inlabel.find("mN1")]
+    mn1 = inlabel[inlabel.find("mN1")+3:inlabel.find("ct")]
+    ct = inlabel[inlabel.find("ct")+2:]
+    ct = ct.replace("p",".")
+    return f"m_{{#tilde{{g}}}}({mgl})-m_{{#tilde{{#chi}}_{{2}}^{{0}}}}({mn2})-m_{{#tilde{{#chi}}_{{1}}^{{0}}}}({mn1}), c#tau={ct} m"
 
 def transform_to_final_state(inlabel):
     retlabel = ""
@@ -40,7 +28,7 @@ def transform_to_final_state(inlabel):
         retlabel = objlabel[0]
         reglabel = [l for l in labels if retlabel not in l]
         if len(reglabel) == 1: #1 region
-            retlabel += f"labels_dict[reglabel[0]]"
+            retlabel += f"self._labels_dict[reglabel[0]]"
             return retlabel
         else: #multi-region, not defined
             print("labels",labels,"parsing not defined")
@@ -64,6 +52,29 @@ class PlotFormatHelper:
         self._hist_index = None
         self._all_hists = None
         self.IndexHists()
+        self._labels_dict = {
+            "ge2pho" : "#geq 2 #gamma",
+            "1pho" : "1 #gamma",
+            "1pho1HadSV" : "1 #gamma + 1 SV_{hh}",
+            "nonIsoEECR" : "Prompt EE nonIso CR",
+            "verynonIsoEECR" : "Prompt EE veryNonIso CR",
+            "BHCR_long" : "Beam Halo CR",
+            "earlyBHCR_long" : "Early Beam Halo CR",
+            "lateBHCR_long" : "Late Beam Halo CR",
+            "isoEESR" : "Prompt Iso SR",
+            "earlyPBCR" : "Early !Beam Halo CR",
+            "latePBCR" : "Late !Beam Halo SR",
+            "METPD" : "MET PD Run II",
+            "METFullRunII" : "MET PD Run II",
+            "MET18" : "MET PD 2018",
+            "MET17" : "MET PD 2017",
+            "MET16" : "MET PD 2016",
+            "Prompt EE nonIso CR" : "_{t0}^{CR,!Iso}",
+            "Prompt EE veryNonIso CR" : "_{t0}^{CR,V!Iso}",
+            "earlyBHCR" : "_{t-}^{CR, BH}",
+            "lateBHCR" : "_{t+}^{CR, BH}"
+        }
+
 
     def IndexHists(self): #call once
         self._hist_index = defaultdict(set)
@@ -248,25 +259,24 @@ class PlotFormatHelper:
                 reg += "_"+option
             if histtype_l != histtype:
                 print("Error: combining hists with types",histtype_l,"and",histtype)
-            if proc not in labels_dict.keys():
+            if proc not in self._labels_dict.keys():
                 procs.add(proc)
             else:
-                procs.add(labels_dict[proc])
-            if ch not in labels_dict.keys():
+                procs.add(self._labels_dict[proc])
+            if ch not in self._labels_dict.keys():
                 chs.add(ch)
             else:
-                chs.add(labels_dict[ch])
-            if reg not in labels_dict.keys():
+                chs.add(self._labels_dict[ch])
+            if reg not in self._labels_dict.keys():
                 regs.add(reg)
             else:
-                regs.add(labels_dict[reg])
+                regs.add(self._labels_dict[reg])
         list_types = [procs, chs, regs]
         final_labels = []
-        group_label = ""
+        group_label = []
         for ltype in list_types:
-            print('ltype',ltype)
             if len(ltype) == 1:
-                group_label += list(ltype)[0]+", "
+                group_label.append(list(ltype)[0])
             elif len(ltype) > 1:
                 if len(final_labels) == 0:
                     final_labels = [ll for ll in ltype]
@@ -277,14 +287,14 @@ class PlotFormatHelper:
                             new_final_labels.append(flabel+" "+ll) 
                     final_labels = new_final_labels
             else: #len(l) == 0
-                continue 
-        if group_label[-1] == " ":
-            group_label = group_label[:group_label.rfind(",")]
+                continue
+        #remove repeated instances of labels
+        group_label = np.unique(group_label).tolist() 
         print("final_labels",final_labels,"group_label",group_label)
         return final_labels, group_label
 
 class PlotFormatter():
-    def __init__(self, lumi = 138, plot_format = ".png"):
+    def __init__(self, helper, lumi = 138, plot_format = ".png"):
         self._styler = StyleManager(lumi) 
         self._plotter1d = Plotter1D(self._styler)
         self._plotter2D = Plotter2D(self._styler)
@@ -292,6 +302,7 @@ class PlotFormatter():
         self._plotterDataMC._ensure_mc_colors()
         self._plot_format = plot_format
         self._lumi = lumi
+        self._helper = helper
       
 
     def format_2d_hist(self, name, hist, sample_label, x_label, x_min, x_max, y_label, y_min, y_max, normalize = False, globallabel = "", sample_label_x_pos = 0.65):
@@ -301,11 +312,16 @@ class PlotFormatter():
         axis_labels['x'] = x_label
         axis_labels['y'] = y_label
         final_state_label = ""
-        if sample_label not in labels_dict.values():
-            sample_label = labels_dict[sample_label]
+        print("sample_label",sample_label)
+        if sample_label not in self._helper._labels_dict.values():
+            if "SMS" in sample_label:
+                sample_label = get_signal_label(sample_label)
+                sample_label_x_pos = 0.32
+            else:
+                sample_label = self._helper._labels_dict[sample_label]
         if globallabel != "":
             final_state_label = transform_to_final_state(globallabel)
-        self._plotter2D.plot_2d_baseFormat(hist, canvas, axis_labels, sample_label, final_state_label, sample_label_x_pos=sample_label_x_pos)
+        self._plotter2D.plot_2d_baseFormat(hist, canvas, axis_labels, sample_label, final_state_label, sample_label_x_pos=sample_label_x_pos,normalize=normalize)
         return canvas
  
     def get_hist_process(self, hist): 
@@ -324,21 +340,26 @@ class PlotFormatter():
         if normalize and hist.Integral() > 0:
             hist.Scale(1.0 / hist.Integral())
 
-    def format_hist_1d(self, hist, color, style, normalize = False, logy=False):
-        format_hist_1d_base(hist, color, style, normalize=False)
+    def format_1d_hist(self, name, sample_label, hist, var_label, color, style, xmin, xmax, normalize = False, logy=False, sample_label_x_pos = 0.65):
+        self.format_hist_1d_base(hist, color, style, normalize=normalize)
         #do canvas
-        can = plotter1d._initialize_canvas(name, xmin, xmax, var_label)	
+        can = self._plotter1d._initialize_canvas(name, xmin, xmax, var_label)	
         if logy:
             can.SetLogy()
         
         #setup hist axes
         x_label = var_label 
-        self._plotter1d.setup_axes(hist, x_label, normalize=normalize) 
+        self._plotter1d.setup_axes(hist, x_label, normalized=normalize) 
         hist.Draw("HIST")
         #add histograms after dereferencing
-        self._styler.draw_cms_labels(prelim_str="Preliminary")#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
+        proc = self.get_hist_process(hist)
+        if "MET" not in proc:
+        	prelim_str = "Simulation"
+        else:
+        	prelim_str = "Preliminary"
+        self._styler.draw_cms_labels(prelim_str=prelim_str)#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
         self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.88)
-        can.SaveAs("test"+self._plot_format)
+        return can
 
     def format_hists_1d(self, hists, colors, styles, normalize = False, logy = False):
         for hist, color, style in zip(hists, colors, styles):
@@ -358,8 +379,7 @@ class PlotFormatter():
         #add histograms after dereferencing
         self._styler.draw_cms_labels(prelim_str="Preliminary")#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
         self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.88)
-        can.SaveAs("test"+self._plot_format)
-
+        return can
     
     def add_histogram_to_canvas(self, canvas: ROOT.TCanvas, hist: ROOT.TH1D, 
                                draw_option: str = "hist", is_first: bool = True) -> None:
