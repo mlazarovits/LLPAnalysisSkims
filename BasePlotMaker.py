@@ -3,43 +3,6 @@ from typing import Dict, List, Tuple, Optional
 import numpy as np
 import cmsstyle as CMS
 
-class ComparisonMaker:
-    def __init__(self):
-        self.label_mapping = {
-            'QCD': 'QCD multijets',
-            'WJets': 'W + jets', 
-            'ZJets': 'Z + jets',
-            'GJets': '#gamma + jets',
-            'TTXJets': 't#bar{t} + X',
-            'TTJets': 't#bar{t} + jets',
-            'DYJets': 'Drell-Yan',
-            'VV': 'Diboson',
-            'SingleTop': 'Single top',
-            'ST': 'Single top',
-            'DiPJBox' : 'Di-photon + jets' #may need to combine with GJets
-        }
-
-    def _get_background_color_index(self, inlabel):
-        """Get the color index for a specific background based on physics process."""
-        bg_name = self.label_mapping[inlabel] 
-        # Background to color mapping (using original hex color indices)
-        # QCD=purple, WJets=teal, ZJets=yellow/gold, TTX=red/orange, GJets=pink/rose
-        background_color_map = {
-            'QCD multijets': 1179,        # #5A4484 - Purple
-            'W + jets': 1180,             # #347889 - Teal/Blue-green
-            'Z + jets': 1181,             # #F4B240 - Yellow/Gold
-            't#bar{t} + X': 1182,         # #E54B26 - Red/Orange
-            't#bar{t} + jets': 1182,      # #E54B26 - Red/Orange (same as TTX)
-            '#gamma + jets': 1183,        # #C05780 - Pink/Rose
-            'Di-photon + jets': 1183,        # #C05780 - Pink/Rose
-            # Assign remaining backgrounds to remaining colors
-            'Drell-Yan': 1184,            # #7A68A6 - Light purple
-            'Diboson': 1185,              # #2E8B57 - Sea green
-            'Single top': 1186,           # #8B4513 - Saddle brown
-        }
-        
-        return background_color_map.get(bg_name, 1179)  # Default to purple if not found
-
 class UnrollMaker:
     def __init__(self):
         # Group label configuration

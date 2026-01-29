@@ -1,6 +1,6 @@
 from LLPStandardPlots.src.plotter import Plotter1D, Plotter2D, PlotterDataMC
 from LLPStandardPlots.src.style import StyleManager
-from BasePlotMaker import UnrollMaker, ComparisonMaker 
+from BasePlotMaker import UnrollMaker
 import ROOT
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
@@ -20,22 +20,6 @@ def get_signal_label(inlabel):
     ct = ct.replace("p",".")
     return f"m_{{#tilde{{g}}}}({mgl})-m_{{#tilde{{#chi}}_{{2}}^{{0}}}}({mn2})-m_{{#tilde{{#chi}}_{{1}}^{{0}}}}({mn1}), c#tau={ct} m"
 
-def transform_to_final_state(inlabel):
-    retlabel = ""
-    labels = inlabel.split(", ")
-    objlabel = [l for l in labels if "#gamma" in l]
-    if len(objlabel) == 1: #1 channel
-        retlabel = objlabel[0]
-        reglabel = [l for l in labels if retlabel not in l]
-        if len(reglabel) == 1: #1 region
-            retlabel += f"self._labels_dict[reglabel[0]]"
-            return retlabel
-        else: #multi-region, not defined
-            print("labels",labels,"parsing not defined")
-            return inlabel
-    else: #multi-channel, not defined
-        print("labels",labels,"parsing not defined")
-        return inlabel
 
 def interval_to_label(interval):
     str_label = "["+str(interval[0])+", "+str(interval[1])
@@ -56,25 +40,80 @@ class PlotFormatHelper:
             "ge2pho" : "#geq 2 #gamma",
             "1pho" : "1 #gamma",
             "1pho1HadSV" : "1 #gamma + 1 SV_{hh}",
-            "nonIsoEECR" : "Prompt EE nonIso CR",
-            "verynonIsoEECR" : "Prompt EE veryNonIso CR",
+            "nonIsoEECR_long" : "Prompt EE nonIso CR",
+            "loosenonIsoEECR_long" : "Prompt EE loose nonIso CR",
+            "looseNotTightnonIsoEECR_long" : "Prompt EE loose!tight nonIso CR",
+            "tightnonIsoEECR_long" : "Prompt EE tight nonIso CR",
+            "verynonIsoEECR_long" : "Prompt EE tight NonIso CR",
             "BHCR_long" : "Beam Halo CR",
             "earlyBHCR_long" : "Early Beam Halo CR",
             "lateBHCR_long" : "Late Beam Halo CR",
-            "isoEESR" : "Prompt Iso SR",
-            "earlyPBCR" : "Early !Beam Halo CR",
-            "latePBCR" : "Late !Beam Halo SR",
+            "isoEESR_long" : "Prompt Iso SR",
+            "earlyPBCR_long" : "Early !Beam Halo CR",
+            "latePBCR_long" : "Late !Beam Halo SR",
+            "nonIsoEECR" : "_{t0}^{CR,nonIso}",
+            "loosenonIsoEECR" : "_{t0}^{CR,LnonIso}",
+            "looseNotTightnonIsoEECR" : "_{t0}^{CR,L!TnonIso}",
+            "tightnonIsoEECR" : "_{t0}^{CR,TnonIso}",
+            "verynonIsoEECR" : "_{t0}^{CR,TnonIso}",
+            "earlyBHCR" : "_{t-}^{CR, BH}",
+            "lateBHCR" : "_{t+}^{CR, BH}"
+        }
+        self._sample_label_mapping = {
+            'QCD': 'QCD multijets',
+            'WJets': 'W + jets', 
+            'ZJets': 'Z + jets',
+            'GJets': '#gamma + jets',
+            'TTXJets': 't#bar{t} + X',
+            'TTJets': 't#bar{t} + jets',
+            'DYJets': 'Drell-Yan',
+            'VV': 'Diboson',
+            'SingleTop': 'Single top',
+            'ST': 'Single top',
+            'DiPJBox' : 'Di-photon + jets', #may need to combine with GJets
             "METPD" : "MET PD Run II",
             "METFullRunII" : "MET PD Run II",
             "MET18" : "MET PD 2018",
             "MET17" : "MET PD 2017",
             "MET16" : "MET PD 2016",
-            "Prompt EE nonIso CR" : "_{t0}^{CR,!Iso}",
-            "Prompt EE veryNonIso CR" : "_{t0}^{CR,V!Iso}",
-            "earlyBHCR" : "_{t-}^{CR, BH}",
-            "lateBHCR" : "_{t+}^{CR, BH}"
         }
 
+    def _get_background_color_index(self, inlabel):
+        """Get the color index for a specific background based on physics process."""
+        bg_name = self._sample_label_mapping[inlabel] 
+        # Background to color mapping (using original hex color indices)
+        # QCD=purple, WJets=teal, ZJets=yellow/gold, TTX=red/orange, GJets=pink/rose
+        background_color_map = {
+            'QCD multijets': 1179,        # #5A4484 - Purple
+            'W + jets': 1180,             # #347889 - Teal/Blue-green
+            'Z + jets': 1181,             # #F4B240 - Yellow/Gold
+            't#bar{t} + X': 1184,         # #E54B26 - Red/Orange
+            't#bar{t} + jets': 1184,      # #E54B26 - Red/Orange (same as TTX)
+            '#gamma + jets': 1182,        # #C05780 - Pink/Rose
+            # Assign remaining backgrounds to remaining colors
+            'Drell-Yan': 1184,            # #7A68A6 - Light purple
+            'Diboson': 1185,              # #2E8B57 - Sea green
+            'Single top': 1186,           # #8B4513 - Saddle brown
+        }
+        
+        return background_color_map.get(bg_name, 1179)  # Default to purple if not found
+
+
+    def transform_to_final_state(self, labels):
+        retlabel = ""
+        objlabel = [l for l in labels if "#gamma" in l]
+        if len(objlabel) == 1: #1 channel
+            retlabel = objlabel[0]
+            reglabel = [l for l in labels if retlabel not in l]
+            if len(reglabel) == 1: #1 region
+                retlabel += f"{self._labels_dict[reglabel[0]]}"
+                return retlabel
+            else: #multi-region, not defined
+                print("labels",labels,"parsing not defined")
+                return inlabel
+        else: #multi-channel, not defined
+            print("labels",labels,"parsing not defined")
+            return labels
 
     def IndexHists(self): #call once
         self._hist_index = defaultdict(set)
@@ -303,7 +342,9 @@ class PlotFormatter():
         self._plot_format = plot_format
         self._lumi = lumi
         self._helper = helper
-      
+     
+    def SetLumi(self, lumi):
+        self._styler.SetLumi(lumi) 
 
     def format_2d_hist(self, name, hist, sample_label, x_label, x_min, x_max, y_label, y_min, y_max, normalize = False, globallabel = "", sample_label_x_pos = 0.65):
         canvas = CMS.cmsCanvas(name, x_min, x_max, y_min, y_max, x_label, y_label, 
@@ -313,15 +354,18 @@ class PlotFormatter():
         axis_labels['y'] = y_label
         final_state_label = ""
         print("sample_label",sample_label)
+        prelim_str = "Preliminary"
         if sample_label not in self._helper._labels_dict.values():
             if "SMS" in sample_label:
                 sample_label = get_signal_label(sample_label)
                 sample_label_x_pos = 0.32
+                prelim_str = "Preliminary Simulation"
             else:
-                sample_label = self._helper._labels_dict[sample_label]
+                sample_label = self._helper._sample_label_mapping[sample_label]
+                prelim_str = "Preliminary"
         if globallabel != "":
-            final_state_label = transform_to_final_state(globallabel)
-        self._plotter2D.plot_2d_baseFormat(hist, canvas, axis_labels, sample_label, final_state_label, sample_label_x_pos=sample_label_x_pos,normalize=normalize)
+            final_state_label = self._helper.transform_to_final_state(globallabel)
+        self._plotter2D.plot_2d_baseFormat(hist, canvas, axis_labels, sample_label, final_state_label, sample_label_x_pos=sample_label_x_pos,normalize=normalize,prelim_str = prelim_str)
         return canvas
  
     def get_hist_process(self, hist): 
@@ -379,6 +423,9 @@ class PlotFormatter():
         #add histograms after dereferencing
         self._styler.draw_cms_labels(prelim_str="Preliminary")#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
         self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.88)
+        if globallabel != "":
+            final_state_label = self._helper.transform_to_final_state(globallabel)
+            self._plotter1D._draw_region_label(can, final_state_label, x_pos=0.45, y_pos=0.93, textsize=0.05, plot_type="datamc")
         return can
     
     def add_histogram_to_canvas(self, canvas: ROOT.TCanvas, hist: ROOT.TH1D, 
@@ -521,7 +568,6 @@ class PlotFormatter():
         hist.SetLineWidth(self._styler.data_line_width)
 
     def format_stack_hists_datamc(self, canvas_name, data_histogram, mc_histograms, var_label, x_min, x_max, normalize, draw_mc_uncertainty = False, globallabel = ""):
-        comp_maker = ComparisonMaker()
         # Use shared canvas setup
         canvas, pad1, pad2 = self._plotterDataMC._setup_comparison_canvas(canvas_name, x_min, x_max, var_label)
         # Setup main pad with standard data/MC grid
@@ -536,9 +582,9 @@ class PlotFormatter():
         for hist in mc_histograms:
             print(hist.GetName(), hist.Integral())
             bgname = self.get_hist_process(hist)
-            color = comp_maker._get_background_color_index(bgname)
+            color = self._helper._get_background_color_index(bgname)
             self.format_stack_mc_hist(hist, color)
-            format_bg_name = comp_maker.label_mapping[bgname]
+            format_bg_name = self._helper._sample_label_mapping[bgname]
              
             mc_histograms_labeled.append((hist, format_bg_name))
         # Sort MC histograms by yield (ascending order)
@@ -618,7 +664,7 @@ class PlotFormatter():
         self._styler.draw_cms_labels(cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
     
         if globallabel != "":
-            final_state_label = transform_to_final_state(globallabel)
+            final_state_label = self._helper.transform_to_final_state(globallabel)
             self._plotterDataMC._draw_region_label(canvas, final_state_label, x_pos=0.45, y_pos=0.93, textsize=0.05, plot_type="datamc")
         # Draw bottom pad (ratio) only if data is available
         pad2.cd()
@@ -866,7 +912,6 @@ class PlotFormatter():
             label = ylabel + " #in " +interval_to_label(l)
             group_labels.append(label)
         text_objects = unroll_maker.add_group_labels(canvas, group_labels, binning_scheme=binning_scheme)
-
         if globallabel != "":
             unroll_maker._add_global_label(overlay_pad, globallabel)
     

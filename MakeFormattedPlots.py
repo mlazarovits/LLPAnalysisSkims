@@ -83,8 +83,8 @@ if __name__ == "__main__":
  
     for proc in procs:
         #make 2D Ms-Rs plots - nonIsoEECR (data and MC bkg), BHCR (data)
-        channels = ["1pho", "ge2pho", "1pho1HadSV"]
-        regions = ["earlyBHCR","lateBHCR","1pho","ge2pho", "1pho1HadSV"]
+        channels = ["1pho", "ge2pho"]
+        regions = ["earlyBHCR","lateBHCR","loosenonIsoEECR"]
         if 'MsRs' in args.obs:
             #iterate through and format each
             for channel in channels:
@@ -112,8 +112,11 @@ if __name__ == "__main__":
                     rs_max = 1.
                     if "SMS" in proc:
                         normalize = True
+                        helper.NormalizeHist(hist_tev)
+                        formatter.SetLumi(0)
                     else:
                         normalize = False
+                        formatter.SetLumi(138)
                     canvas = formatter.format_2d_hist(canvas_name, hist_tev, sample_label, "M_{S} [TeV]", 0., ms_max, "R_{S}", 0., rs_max, normalize=normalize,globallabel = group_label,sample_label_x_pos=0.6)
                     #canvas.SaveAs(canvas_name+plot_format)
                     ofile.cd()
@@ -141,6 +144,7 @@ if __name__ == "__main__":
                     canvas_name = "can_rsptisr_2d_"+proc+"_"+channel+"_"+region
                     if "SMS" in proc:
                         normalize = True
+                        helper.NormalizeHist(rsptisr_hist)
                     else:
                         normalize = False
                     canvas = formatter.format_2d_hist(canvas_name, rsptisr_hist, sample_label, "R_{ISR}", 50., 1500, "p^{ISR}_{T} [GeV]", 0., 1., normalize=normalize,globallabel = group_label,sample_label_x_pos=0.6)
@@ -150,16 +154,16 @@ if __name__ == "__main__":
        
         if 'yields' in args.obs: 
             #nonIsoEECR
-            yields_hists = helper.GetHists( process=proc,obs="yields", channel = "ge2pho", region="nonIsoEECR")
-            yields_hists += helper.GetHists(process=proc,obs="yields",channel = "ge2pho", region="verynonIsoEECR")
-            yields_hists += helper.GetHists(process=proc,obs="yields",channel = "1pho", region="nonIsoEECR")
-            yields_hists += helper.GetHists(process=proc,obs="yields",channel = "1pho", region="verynonIsoEECR")
+            yields_hists = helper.GetHists( process=proc,obs="yields", channel = "ge2pho", region="looseNotTightnonIsoEECR")
+            yields_hists += helper.GetHists(process=proc,obs="yields",channel = "ge2pho", region="tightnonIsoEECR")
+            yields_hists += helper.GetHists(process=proc,obs="yields",channel = "1pho", region="looseNotTightnonIsoEECR")
+            yields_hists += helper.GetHists(process=proc,obs="yields",channel = "1pho", region="tightnonIsoEECR")
             unrolled_hists = []
             if len(yields_hists) == 0:
                 print("no nonIsoEECR yields hists found for process",proc)
                 continue
             for hist in yields_hists:
-                print(hist.GetName())
+                print("using yields hist",hist.GetName())
                 #format here
                 #unrolls st x-ax are x-bins and y-ax are groups of x-bins
                 #gevtotev tells which axis to transform from gev to tev for bin labels (0 = x, 1 = y)
@@ -170,11 +174,11 @@ if __name__ == "__main__":
             canvas_name = "can_unrolled_msrs_nonIsoEECRs_"+proc
             hist_labels = [hist.GetName() for hist in unrolled_hists]
             hist_labels, group_label = helper.MakeLegendLabels(hist_labels)
-            canvas = formatter.format_unrolled_hists(canvas_name, unrolled_hists, totalbins, "M_{S} [TeV]", "R_{S}", hist_labels, group_label)       
+            canvas = formatter.format_unrolled_hists(canvas_name, unrolled_hists, totalbins, "M_{S} [TeV]", "R_{S}", hist_labels, globallabel=group_label[0]) 
             canvas.SaveAs(canvas_name+plot_format)
             ofile.cd()
             canvas.Write()
-    
+            
             #BH CRs for data only
             yields_hists = helper.GetHists( process=proc,obs="yields", channel = "ge2pho", region="earlyBHCR")
             yields_hists += helper.GetHists(process=proc,obs="yields",channel = "ge2pho", region="lateBHCR")
@@ -196,18 +200,19 @@ if __name__ == "__main__":
             canvas_name = "can_unrolled_msrs_BHCRs_"+proc
             hist_labels = [hist.GetName() for hist in unrolled_hists]
             hist_labels, group_label = helper.MakeLegendLabels(hist_labels,option='long')
-            canvas = formatter.format_unrolled_hists(canvas_name, unrolled_hists, totalbins, "M_{S} [TeV]", "R_{S}", hist_labels, group_label)       
+            canvas = formatter.format_unrolled_hists(canvas_name, unrolled_hists, totalbins, "M_{S} [TeV]", "R_{S}", hist_labels, group_label[0])
             canvas.SaveAs(canvas_name+plot_format)
             ofile.cd()
             canvas.Write()
 
    
-        regions = ["nonIsoEECR","verynonIsoEECR"] 
-        channel = "1pho"
-        if "Ms" in args.obs:
-            for region in regions:
+    regions = ["loosenonIsoEECR","looseNotTightnonIsoEECR", "tightnonIsoEECR"] 
+    channels = ["1pho","ge2pho"]
+    for channel in channels:
+        for region in regions:
+            if "Ms" in args.obs:
                 #make 1D Ms plots, with processes overlaid
-                ms_hist_data = helper.GetHists(process=proc, obs="Ms", channel=channel, region=region,histtype="stack")[0]
+                ms_hist_data = helper.GetHists(process="METFullRunII", obs="Ms", channel=channel, region=region,histtype="stack")[0]
                 ms_hists_mc = []
                 for proc in mc_procs:
                     ms_hists_mc += helper.GetHists(process=proc, obs="Ms", channel=channel, region=region,histtype="stack")
@@ -220,7 +225,7 @@ if __name__ == "__main__":
                 for hist in ms_hists_mc:
                     ms_hists_mc_tev.append(helper.GeVtoTeV(hist))
                 ms_hist_data_tev = helper.GeVtoTeV(ms_hist_data)
-                canvas_name = "can_ms_datamccomp_"+region
+                canvas_name = "can_ms_datamccomp_"+channel+"_"+region
                 x_min = 0.
                 x_max = 3
                 canvas = formatter.format_stack_hists_datamc(canvas_name, ms_hist_data_tev, ms_hists_mc_tev, "M_{S} [TeV]",x_min,x_max, normalize = True, globallabel=group_label) 
@@ -228,43 +233,41 @@ if __name__ == "__main__":
                 ofile.cd()
                 canvas.Write()
 
-        channel = "ge2pho"
-        if "Rs" in args.obs:
-            for region in regions:
-                #make 1D Rs plots, with processes overlaid
-                rs_hist_data = helper.GetHists(process="METPD", obs="Rs", channel=channel, region=region,histtype="stack")[0]
-                rs_hists_mc = []
-                for proc in mc_procs:
-                    rs_hists_mc += helper.GetHists(process=proc, obs="Rs", channel=channel, region=region,histtype="stack")
-                if len(rs_hists_mc) < 1:
-                    print("No MC hists for observable Rs. Not writing stack histogram.")
-                    break
-                canvas_name = "can_rs_datamccomp_"+region
-                hist_labels = [hist.GetName() for hist in rs_hists_mc + [rs_hist_data]]
-                hist_labels, group_label = helper.MakeLegendLabels(hist_labels)
-                x_min = 0.
-                x_max = 1.
-                canvas = formatter.format_stack_hists_datamc(canvas_name, rs_hist_data, rs_hists_mc, "R_{S}",x_min,x_max, normalize = True, globallabel=group_label) 
-                #canvas.SaveAs(canvas_name+plot_format)
-                ofile.cd()
-                canvas.Write()
-
-        #needs to be in kinematic sideband
-        channel = "1pho"
-        region = "MsCR"
-        if "timesig" in args.obs:
-            timesig_hist = helper.GetHists(process=proc, obs="timeSig", channel=channel, region=region,histtype="1d")[0]
-            canvas_name = "can_timesig_"+proc+"_"+region
-            hist_labels = [hist.GetName() for hist in [timesig_hist]]
-            hist_labels, group_label = helper.MakeLegendLabels(hist_labels)
-            sample_label = group_label[1]
-            xmin = 0.
-            xmax = 1.
-            color = 1179
-            canvas = formatter.format_1d_hist(canvas_name, sample_label, timesig_hist, "S_{t}", color=color, style=1, xmin=xmin, xmax=xmax, normalize = True, logy=True) 
-            #canvas.SaveAs(canvas_name+plot_format)
-            ofile.cd()
-            canvas.Write()
+            if "Rs" in args.obs:
+                    #make 1D Rs plots, with processes overlaid
+                    rs_hist_data = helper.GetHists(process="METFullRunII", obs="Rs", channel=channel, region=region,histtype="stack")[0]
+                    rs_hists_mc = []
+                    for proc in mc_procs:
+                        rs_hists_mc += helper.GetHists(process=proc, obs="Rs", channel=channel, region=region,histtype="stack")
+                    if len(rs_hists_mc) < 1:
+                        print("No MC hists for observable Rs. Not writing stack histogram.")
+                        break
+                    canvas_name = "can_rs_datamccomp_"+channel+"_"+region
+                    hist_labels = [hist.GetName() for hist in rs_hists_mc + [rs_hist_data]]
+                    hist_labels, group_label = helper.MakeLegendLabels(hist_labels)
+                    x_min = 0.
+                    x_max = 1.
+                    canvas = formatter.format_stack_hists_datamc(canvas_name, rs_hist_data, rs_hists_mc, "R_{S}",x_min,x_max, normalize = True, globallabel=group_label) 
+                    #canvas.SaveAs(canvas_name+plot_format)
+                    ofile.cd()
+                    canvas.Write()
+    
+    #needs to be in kinematic sideband
+    channel = "1pho"
+    region = "MsCR"
+    if "timesig" in args.obs:
+        timesig_hist = helper.GetHists(process=proc, obs="timeSig", channel=channel, region=region,histtype="1d")[0]
+        canvas_name = "can_timesig_"+proc+"_"+region
+        hist_labels = [hist.GetName() for hist in [timesig_hist]]
+        hist_labels, group_label = helper.MakeLegendLabels(hist_labels)
+        sample_label = group_label[1]
+        xmin = 0.
+        xmax = 1.
+        color = 1179
+        canvas = formatter.format_1d_hist(canvas_name, sample_label, timesig_hist, "S_{t}", color=color, style=1, xmin=xmin, xmax=xmax, normalize = True, logy=True) 
+        #canvas.SaveAs(canvas_name+plot_format)
+        ofile.cd()
+        canvas.Write()
 
 print("Wrote canvases to",ofilename)
 
