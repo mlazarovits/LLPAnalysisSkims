@@ -80,15 +80,18 @@ class RJRAnalysis:
             "Flag_eeBadScFilter == 1 && "
             "Flag_goodVertices == 1)"
         )
-        #beam halo CR bins - limited stats regime
+        #10000 is upperlimit (ie inclusive)
         self._msrs_bins = {}
-        self._msrs_bins["1pho"] =   {"ms" : array("d", [200, 800, 10000]), "rs": array("d", [0.15, 1.0])}
-        self._msrs_bins["ge2pho"] = {"ms" : array("d", [200, 800, 10000]), "rs": array("d", [0.15, 1.0])}
+        self._msrs_bins["1pho"] =   {"ms" : array("d", [0, 10000]), "rs": array("d", [0, 1.0])}
+        self._msrs_bins["1HadSV"] =   {"ms" : array("d", [0, 10000]), "rs": array("d", [0., 1.0])}
+        self._msrs_bins["ge2pho"] = {"ms" : array("d", [0, 10000]), "rs": array("d", [0., 1.0])}
         self._msrs_bins["BHCR"] = {"ms" : array("d", [700, 1000, 10000]), "rs": array("d", [0.15, 1.0])}
         self._msrs_bins["PBCR"] = {"ms" : array("d", [700, 1000, 10000]), "rs": array("d", [0.15, 1.0])}
         self._msrs_bins["PBSR"] = {"ms" : array("d", [700, 1000, 10000]), "rs": array("d", [0.15, 0.3, 1.0])}
         self._msrs_bins["nonIsoEECR"] = {"ms": array("d", [700, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
         self._msrs_bins["isoEESR"] = {"ms": array("d", [500, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
+        self._msrs_bins["MsCR"] = {"ms" : array("d", [0, self._msrs_bins["BHCR"]['ms'][0]]), "rs": array("d", [0.15, 1.0])}
+        self._msrs_bins["RsCR"] = {"ms" : array("d", [0, 10000]), "rs": array("d", [self._msrs_bins["BHCR"]['rs'][0], 1.0])}
 
         #declare functions for defining photon CRs
         #only works for 1 + >=2 photon channels rn
@@ -174,7 +177,8 @@ class RJRAnalysis:
             "1pho": df.Filter("nSelPhotons == 1 && SV_nLeptonic == 0 && SV_nHadronic == 0", "1nSelPho"),
             #"ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
             "ge2pho": df.Filter("nSelPhotons >= 2 && SV_nLeptonic == 0 && SV_nHadronic == 0", "ge2nSelPho"),
-            "1pho1HadSV" : df.Filter("nSelPhotons == 1 && SV_nHadronic == 1 && SV_nLeptonic == 0","1nSelPho1HadSV")
+            "1pho1HadSV" : df.Filter("nSelPhotons == 1 && SV_nHadronic == 1 && SV_nLeptonic == 0","1nSelPho1HadSV"),
+            "1HadSV" : df.Filter("nSelPhotons == 0 && SV_nHadronic == 1 && SV_nLeptonic == 0","1HadSV")
         }
     
     def define_regions(self, df, ch_name, mc):
@@ -190,10 +194,12 @@ class RJRAnalysis:
 
         #df_regidxs.Filter("selPhoIdx_EEIsoTag == 1").Display(["selPhoIdx_EEIsoTag","selPho_isoANNScore","selPhoPt","selPhoWTimeSig"],45).Print()
 
-        ee_nonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']}" 
-        ee_verynonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']}" 
-        print(f"EE_nonIso cut: {ee_nonIsoCut}")
-        print(f"EE_veryNonIso cut: {ee_verynonIsoCut}")
+        ee_loosenonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']}" 
+        ee_looseNotTightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']}" 
+        ee_tightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']}" 
+        print(f"loose EE_nonIso cut: {ee_loosenonIsoCut}")
+        print(f"loose!tight EE_nonIso cut: {ee_looseNotTightnonIsoCut}")
+        print(f"tight EE_NonIso cut: {ee_tightnonIsoCut}")
         regions = {
             "earlyBHCR": df_regidxs.Filter(
                 f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] < {self._threshs['early_timesig']}",
@@ -203,15 +209,23 @@ class RJRAnalysis:
                 f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] > {self._threshs['late_timesig']}",
                 f"lateBHCR_{ch_name}"
             ),
-            "nonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
-                ee_nonIsoCut,
-                f"nonIsoEECR_{ch_name}"
+            "loosenonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh
+                ee_loosenonIsoCut,
+                f"loosenonIsoEECR_{ch_name}"
             ),
-            "verynonIsoEECR": df_regidxs.Filter( #score needs to pass EE_veryNonIso thresh
-                ee_verynonIsoCut,
-                f"verynonIsoEECR_{ch_name}"
+            "looseNotTightnonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
+                ee_loosenonIsoCut,
+                f"looseNotTightIsoEECR_{ch_name}"
+            ),
+            "tightnonIsoEECR": df_regidxs.Filter( #score needs to pass EE_veryNonIso thresh
+                ee_tightnonIsoCut,
+                f"tightnonIsoEECR_{ch_name}"
             ),
         }
+        #define kinematic sideband regions
+        regions[f"MsCR"] = df_regidxs.Filter(f"rjr_Ms0 < {self._msrs_bins['BHCR']['ms'][0]}")
+        regions[f"RsCR"] = df_regidxs.Filter(f"rjr_Rs0 < {self._msrs_bins['BHCR']['rs'][0]}")
+        
         #if MC, define PB early/late regions and iso SRs
         if mc:
             pbEarly = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] < {self._threshs['early_timesig']}"
@@ -222,12 +236,19 @@ class RJRAnalysis:
             eeIso = f"selPhoIdx_EEIsoTag != -1 &&  selPhoWTimeSig[selPhoIdx_EEIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEIsoTag] < {self._threshs['prompt_timesig']}"
             regions["isoEESR"] = df_regidxs.Filter(eeIso,f"isoEESR_{ch_name}")
             #do inclusive object-multiplicity-defined region
-            regions[ch_name] = df_regidxs 
+            regions[ch_name] = df_regidxs
+        
         return regions
    
     def do_ms_rs_cuts(self, df, reg_name):
-        reg_name_key = next(k for k in self._msrs_bins if k in reg_name)
-        return df.Filter(f"rjr_Rs0 > {self._msrs_bins[reg_name_key]['rs'][0]}").Filter(f"rjr_Ms0 > {self._msrs_bins[reg_name_key]['ms'][0]}")
+        #in kinematic sidebands only do cuts on other obs
+        if 'Ms' in reg_name:
+            return df.Filter(f"rjr_Rs0 > {self._msrs_bins['BHCR']['rs'][0]}")
+        elif 'Rs' in reg_name:
+            return df.Filter(f"rjr_Ms0 > {self._msrs_bins['BHCR']['ms'][0]}")
+        else:
+            reg_name_key = next(k for k in self._msrs_bins if k in reg_name)
+            return df.Filter(f"rjr_Rs0 > {self._msrs_bins[reg_name_key]['rs'][0]}").Filter(f"rjr_Ms0 > {self._msrs_bins[reg_name_key]['ms'][0]}")
  
     def fill_region_hists(self, df, proc_name, reg_name, ch_name, h1d, h2d):
         reg_name_key = next(k for k in self._msrs_bins if k in reg_name)
@@ -237,7 +258,7 @@ class RJRAnalysis:
         if "CR" in reg_name:
             msmax = 2000
         else:
-            msmax = 10000 
+            msmax = 5000 
         n_msbins = len(msbins) - 1
         n_rsbins = len(rsbins) - 1
    
@@ -252,29 +273,29 @@ class RJRAnalysis:
         h2d.append(
             df.Histo2D(
 	            (f"MsRs_{proc_name}_{ch_name}_{reg_name}", ";Ms;Rs",
-                 20, msbins[0], msmax, 20, rsbins[0], rsbins[-1]+0.01),
+                 25, msbins[0], msmax, 25, rsbins[0], 1.01),
                 "rjr_Ms0", "rjr_Rs0", "evtFillWgt"
             )
         )
         #compressed kinematics
         h2d.append(
-            df.Histo2D(
-	            (f"RsPtISR_{proc_name}_{ch_name}_{reg_name}", ";Rs;ptISR",
-                 20, 0, rsbins[-1]+0.01, 20, 0, 1000),
-                "rjrIsr_Rs", "rjrIsr_PtIsr", "evtFillWgt"
+            df.Filter("rjrIsr_PtIsr != -1").Histo2D( #remove events with ill-defined ISR trees
+	            (f"RISRPtISR_{proc_name}_{ch_name}_{reg_name}", ";RISR;ptISR",
+                 25, 0, rsbins[-1]+0.01, 25, 50, 1500),
+                "rjrIsr_RIsr", "rjrIsr_PtIsr", "evtFillWgt"
             )
         )
    
         h1d.append(
             df.Histo1D(
-	            (f"Rs_{proc_name}_{ch_name}_{reg_name}", "", 50, rsbins[0], rsbins[-1]+0.01),
+	            (f"Rs_{proc_name}_{ch_name}_{reg_name}", "", 25, rsbins[0], rsbins[-1]+0.01),
                 "rjr_Rs0", "evtFillWgt"
             )
         )
    	
         h1d.append(
             df.Histo1D(
-	            (f"Ms_{proc_name}_{ch_name}_{reg_name}", "", 50, msbins[0], msbins[-1]),
+	            (f"Ms_{proc_name}_{ch_name}_{reg_name}", "", 25, msbins[0], msbins[-1]),
                 "rjr_Ms0", "evtFillWgt"
             )
         )
@@ -406,6 +427,9 @@ class RJRAnalysis:
             files = []
             if "SMS" in proc: #assume only one mass point given
                 files += fileprocessor.GetFiles(proc, mGl, mN2, mN1, ctau)
+                if(len(files) < 1):
+                    print("No files found for ",proc,"with mGl",mGl,"mN2",mN2,"mN1",mN1,"ctau",ctau)
+                    continue
                 if "gogoGZ" in files[0] and "skims_v46" in files[0]: #only do for skims_v46 gogoGZ signal samples
                     checkForBadWgts = True
             else: 
@@ -471,7 +495,7 @@ class RJRAnalysis:
                 for reg_name, df_reg in regions.items():
                     #print("  doing region", reg_name)
                     #define columns with lowest Rs/Ms cuts
-                    self.do_ms_rs_cuts(df_reg, reg_name)
+                    df_reg = self.do_ms_rs_cuts(df_reg, reg_name)
                     self.fill_region_hists(
                         df_reg, procstr, reg_name, ch_name,
                         hists1d, hists2d
@@ -487,7 +511,8 @@ class RJRAnalysis:
                 report.Print() #triggers event loop with Print() call dereferencing
         #process loop end
     
-    
+        if procstr == "":
+            return 
         if ofilename_extra:
             ofilename += f"_{ofilename_extra}"
         ofilename += "_rjrObs.root"
