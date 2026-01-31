@@ -21,6 +21,7 @@ class RJRAnalysis:
         self._eff_parser = EfficiencyParser()
         self._branches = [
             "rjr_Rs","rjr_Ms","selCMet","rjrPTS","rjrIsr_PtIsr","rjrIsr_Rs",
+            "HadronicSV_dxySig",
             "evtFillWgt",
             "Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60",
             "Trigger_PFMETNoMu120_PFMHTNoMu120_IDTight",
@@ -37,6 +38,8 @@ class RJRAnalysis:
             "Flag_goodVertices",
             "Flag_hfNoisyHitsFilter",
             "nSelPhotons",
+            "SV_nLeptonic",
+            "SV_nHadronic",
             "selPhoWTime",
             "selPho_beamHaloCNNScore",
             "selPho_physBkgCNNScore",
@@ -92,6 +95,7 @@ class RJRAnalysis:
         self._msrs_bins["isoEESR"] = {"ms": array("d", [500, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
         self._msrs_bins["MsCR"] = {"ms" : array("d", [0, self._msrs_bins["BHCR"]['ms'][0]]), "rs": array("d", [0.15, 1.0])}
         self._msrs_bins["RsCR"] = {"ms" : array("d", [0, 10000]), "rs": array("d", [self._msrs_bins["BHCR"]['rs'][0], 1.0])}
+        self._msrs_bins["dxySigCR"] = {"ms" : array("d", [1000, 10000]), "rs": array("d", [0.15, 1.0])}
 
         #declare functions for defining photon CRs
         #only works for 1 + >=2 photon channels rn
@@ -225,8 +229,9 @@ class RJRAnalysis:
         #define kinematic sideband regions
         regions[f"MsCR"] = df_regidxs.Filter(f"rjr_Ms0 < {self._msrs_bins['BHCR']['ms'][0]}")
         regions[f"RsCR"] = df_regidxs.Filter(f"rjr_Rs0 < {self._msrs_bins['BHCR']['rs'][0]}")
-        
-        #if MC, define PB early/late regions and iso SRs
+        regions[f"dxySigCR"] = df_regidxs.Filter("HadronicSV_dxySig[0] < 1000")       
+ 
+        #if MC, de#fine PB early/late regions and iso SRs
         if mc:
             pbEarly = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] < {self._threshs['early_timesig']}"
             pbLate = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] > {self._threshs['late_timesig']}"
@@ -247,6 +252,9 @@ class RJRAnalysis:
         elif 'Rs' in reg_name:
             return df.Filter(f"rjr_Ms0 > {self._msrs_bins['BHCR']['ms'][0]}")
         else:
+            #if reg_name not in any(self._msrs_bins):
+            #    print("Region",reg_name,"does not have MsRs yields binnings defined. Please add.")
+            #    exit()
             reg_name_key = next(k for k in self._msrs_bins if k in reg_name)
             return df.Filter(f"rjr_Rs0 > {self._msrs_bins[reg_name_key]['rs'][0]}").Filter(f"rjr_Ms0 > {self._msrs_bins[reg_name_key]['ms'][0]}")
  
@@ -256,7 +264,7 @@ class RJRAnalysis:
         rsbins = self._msrs_bins[reg_name_key]['rs']
        
         if "CR" in reg_name:
-            msmax = 2000
+            msmax = 4000
         else:
             msmax = 5000 
         n_msbins = len(msbins) - 1
@@ -273,7 +281,7 @@ class RJRAnalysis:
         h2d.append(
             df.Histo2D(
 	            (f"MsRs_{proc_name}_{ch_name}_{reg_name}", ";Ms;Rs",
-                 25, msbins[0], msmax, 25, rsbins[0], 1.01),
+                 25, 1000, msmax, 25, rsbins[0], 1.0),
                 "rjr_Ms0", "rjr_Rs0", "evtFillWgt"
             )
         )
