@@ -75,36 +75,35 @@ class FileProcessor():
         	path+"TTXJets_R18_SVIPM100_v31_ttZJets_rjrskim.root"
         ]
         
-        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v45/"
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/"
         self._procFiles["METPD16"] = [
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016B_rjrskim_v45.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016C_rjrskim_v45.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016D_rjrskim_v45.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016G_rjrskim_v45.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016H_rjrskim_v45.root",
+            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016B_rjrskim.root",
+            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016C_rjrskim.root",
+            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016D_rjrskim.root",
+            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016G_rjrskim.root",
+            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016H_rjrskim.root",
         ]
         
         self._procFiles["METPD17"] = [
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017A_rjrskim_v45.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017B_rjrskim_v45.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017C_rjrskim_v45.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017D_rjrskim_v45.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017E_rjrskim_v45.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017F_rjrskim_v45.root",
+            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017A_rjrskim.root",
+            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017B_rjrskim.root",
+            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017C_rjrskim.root",
+            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017D_rjrskim.root",
+            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017E_rjrskim.root",
+            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017F_rjrskim.root",
         ]
         
         self._procFiles["METPD18"] = [
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018A_rjrskim_v45.root",
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim_v45.root",
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018C_rjrskim_v45.root",
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018D_rjrskim_v45.root",
+            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018A_rjrskim.root",
+            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim.root",
+            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018C_rjrskim.root",
+            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018D_rjrskim.root",
         ]
 
         self._procFiles["METPD_test"] = [
-           path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim_v45.root"
+           path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim.root"
         ]
         
-        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/"
         self._procFiles["QCD"] = [
             path+"QCD_R18_SVIPM100_v31_QCD_HT1000to1500_rjrskim.root",
             path+"QCD_R18_SVIPM100_v31_QCD_HT100to200_rjrskim.root",
