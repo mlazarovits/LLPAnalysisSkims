@@ -567,7 +567,7 @@ class PlotFormatter():
         hist.SetMarkerSize(self._styler.data_marker_size)
         hist.SetLineWidth(self._styler.data_line_width)
 
-    def format_stack_hists_datamc(self, canvas_name, data_histogram, mc_histograms, var_label, x_min, x_max, normalize, draw_mc_uncertainty = False, globallabel = ""):
+    def format_stack_hists_datamc(self, canvas_name, data_histogram, mc_histograms, var_label, x_min, x_max, normalize, draw_mc_uncertainty = True, globallabel = ""):
         # Use shared canvas setup
         canvas, pad1, pad2 = self._plotterDataMC._setup_comparison_canvas(canvas_name, x_min, x_max, var_label)
         # Setup main pad with standard data/MC grid
