@@ -42,6 +42,11 @@ class FileProcessor():
             path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p5_rjrskim.root"
         ]
         
+	path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v47/"
+        self._procFiles["SMS_gogoG"] = [
+            path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2500_mN2-1500_mN1-1000_ct0p1_rjrskim.root",
+	]
+        
         self._procFiles["WJets"] = [
         	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-100To200_rjrskim.root",
         	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-1200To2500_rjrskim.root",
