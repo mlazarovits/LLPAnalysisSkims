@@ -1,4 +1,4 @@
-from ROOT import RDataFrame, TChain, TFile, TH1, TH2, gInterpreter
+from ROOT import RDataFrame, TChain, TFile, TH1, TH2, gInterpreter, std
 from tools import EfficiencyParser
 import sys
 import argparse
@@ -47,16 +47,16 @@ class RJRAnalysis:
             "selPho_nonIsoANNScore",
             "selPho_isoANNScore",
             "selPhoEta",
+            "selPhoPt",
             "selPhoEcalRHSumEtConeDR04",
             "selPhoHadTowOverEM",
-            "selPhoTrkSumPtSolidConeDR04"
-            "selPhoWTimeSig"
+            "selPhoTrkSumPtSolidConeDR04",
         ]
         self._threshs = {
             "bh": "0.917252",
             "pb": "0.81476355",
             "EE_nonIso": "0.9290591",
-            "EB_nonIso": "0.99661630", # 
+            "EB_nonIso": "0.99661630", #
             #"EE_veryNonIso": "0.9939665",
             "EE_veryNonIso": "0.99",
             "EE_iso" : "0.9994431", #80% efficiency, 5% bkg contanimination from SMS-GlGl ROC 
@@ -137,15 +137,169 @@ class RJRAnalysis:
         gInterpreter.Declare(
             """
             using ROOT::RVecF;
-            int getTagIdx(const RVecF& scores, const RVecF& eta, const float barrel_score_thresh, const float endcap_score_thresh){
+            using ROOT::VecOps::RVec;
+            //iso + noniso = 1; bh + pb = 1
+            int getRegionIdx(const RVecF& timesigs, const RVecF& etas, const RVecF& bh_scores, const RVecF& noniso_scores, const float prompt_timesig, const float early_timesig, const float late_timesig, const float nonisoEE_scorethresh, const float isoEE_scorethresh, const float nonisoEB_scorethresh, const float isoEB_scorethresh, const float bh_scorethresh, const float pb_scorethresh){
+                bool lead_prompt = (timesigs[0] < prompt_timesig) && (timesigs[0] > -prompt_timesig);
+                bool lead_endcap = (etas[0] > 1.479) || (etas[0] < -1.479);
+                bool lead_early = timesigs[0] < early_timesig;
+                bool lead_late = timesigs[0] > late_timesig;
+                float lead_nonIsoScore = noniso_scores[0];
+                float lead_isoScore = (1 - noniso_scores[0]);
+                float lead_BHscore = bh_scores[0];
+                float lead_PBscore = (1 - bh_scores[0]);
+
+                //loosest isolation cut - photons not passing this do not make it into the analysis
+                float EE_veryNonIso = 0.9939665;
+
+
+                int lead_fail = 0;
+                if(lead_prompt){
+                    if(lead_endcap){
+                        if(lead_nonIsoScore >= EE_veryNonIso){
+                            lead_fail = -11;
+                        }
+                        else if(lead_nonIsoScore >= nonisoEE_scorethresh && lead_nonIsoScore < EE_veryNonIso){
+                            return 1;
+                        }
+                        else if(lead_isoScore >= isoEE_scorethresh){
+                            return 2;
+                        }
+                        else{
+                            lead_fail = -1;
+                        }
+                    }
+                    else{ //(barrel)
+                        if(lead_nonIsoScore >= nonisoEB_scorethresh){
+                            return 3;
+                        }
+                        if(lead_isoScore >= isoEB_scorethresh){
+                            return 4;
+                        }
+                        else{
+                            lead_fail = -2;
+                        }
+                    }
+                }
+                else{ //(lead nonprompt)
+                    if(lead_BHscore >= bh_scorethresh){
+                        if(lead_early){
+                            return 5;
+                        }
+                        else if(lead_late){ //late
+                            return 6;
+                        }
+                        else{
+                            lead_fail = -3;
+                        }
+                    }
+                    else if(lead_PBscore >= pb_scorethresh){
+                        if(lead_early){
+                            return 7;
+                        }
+                        else if(lead_late){ //late
+                            return 8;
+                        }
+                        else{
+                            lead_fail = -4;
+                        }
+                    }
+                    else{
+                        lead_fail = -5;
+                    }
+                }
+                //do only one photon case too!
+                if(timesigs.size() < 2 && lead_fail < 0)
+                    return lead_fail;
+
+
+                //check sublead
+                bool sublead_prompt = (timesigs[1] < prompt_timesig) && (timesigs[1] > -prompt_timesig);
+                bool sublead_endcap = (etas[1] > 1.479) || (etas[1] < -1.479);
+                bool sublead_early = timesigs[1] < early_timesig;
+                bool sublead_late = timesigs[1] > late_timesig;
+                
+                float sublead_nonIsoScore = noniso_scores[0];
+                float sublead_isoScore = (1 - noniso_scores[0]);
+                float sublead_BHscore = bh_scores[0];
+                float sublead_PBscore = (1 - bh_scores[0]);
+                if(sublead_prompt){
+                    if(sublead_endcap){
+                        if(sublead_nonIsoScore >= EE_veryNonIso){
+                            return -12;
+                        }
+                        else if(sublead_nonIsoScore >= nonisoEE_scorethresh && sublead_nonIsoScore < EE_veryNonIso){
+                            return 1;
+                        }
+                        else if(sublead_isoScore >= isoEE_scorethresh){
+                            return 2;
+                        }
+                        else{
+                            return -6;
+                        }
+                    }
+                    else{ //(barrel)
+                        if(sublead_nonIsoScore >= nonisoEB_scorethresh){
+                            return 3;
+                        }
+                        else if(sublead_isoScore >= isoEB_scorethresh){
+                            return 4;
+                        }
+                        else{
+                            return -7;
+                        }
+                    }
+                }
+                else{ //(sublead nonprompt)
+                    if(sublead_BHscore >= bh_scorethresh){
+                        if(sublead_early){
+                            return 5;
+                        }
+                        else if(sublead_late){
+                            return 6;
+                        }
+                        else{
+                            return -8;
+                        }
+                    }
+                    else if(sublead_PBscore >= pb_scorethresh){
+                        if(sublead_early){
+                            return 7;
+                        }
+                        else if(sublead_late){
+                            return 8;
+                        }
+                        else{
+cout << "sublead timesig " << timesigs[1] << endl;
+                            return -9;
+                        }
+                    }
+                    else{
+                        return -10;
+                    }
+                }
+                
+            } 
+            """
+        )
+        gInterpreter.Declare(
+            """
+            using ROOT::RVecF;
+            int getTagIdx(const RVecF& scores, const RVecF& eta, const ROOT::VecOps::RVec<bool>& iso_presel, const map<string,float> score_thresh){
+                float barrel_score_thresh = score_thresh.at("EB");
+                float endcap_score_thresh = score_thresh.at("EE");
                 if(scores.size() < 1){
                     return -1;
                 }
                 else if(scores.size() == 1){
                     float lead_eta = eta[0];
                     if(fabs(lead_eta) < 1.479){
-                        if(scores[0] > barrel_score_thresh)
-                            return 0;
+                        if(iso_presel[0]){
+                            if(scores[0] > barrel_score_thresh)
+                                return 0;
+                            else
+                                return -1;
+                        }
                         else
                             return -1; 
                     }
@@ -160,11 +314,11 @@ class RJRAnalysis:
                     float lead_eta = eta[0];
                     float sublead_eta = eta[1];
                     if(fabs(lead_eta) < 1.479){
-                        if(scores[0] > barrel_score_thresh)
-                            return 0;
+                        if(scores[0] > barrel_score_thresh && iso_presel[0])
+                                return 0;
                         else{
                             if(fabs(sublead_eta) < 1.479){ 
-                                if(scores[1] > barrel_score_thresh)
+                                if(scores[1] > barrel_score_thresh && iso_presel[1])
                                     return 1;
                                 else
                                     return -1;
@@ -183,7 +337,7 @@ class RJRAnalysis:
                             return 0;
                         else{
                             if(fabs(sublead_eta) < 1.479){ 
-                                if(scores[1] > barrel_score_thresh)
+                                if(scores[1] > barrel_score_thresh && iso_presel[1])
                                     return 1;
                                 else
                                     return -1;
@@ -203,115 +357,82 @@ class RJRAnalysis:
         """
         )
         
-    
+    #includes barrel photon iso presel 
     def apply_preselection(self, df):
         baseline = f"{self._metcut} && {self._ptscut} && {self._triggers} && {self._met_filters}"
         return df.Filter(baseline, "baseline")
-    
+       
+    def do_barrel_iso_presel(self, df): 
+        #do barrel photon filtering
+        df = df.Define("passBarrelIsoPresel", "((selPhoEcalRHSumEtConeDR04 < 10.) & (selPhoHadTowOverEM < 0.02) & (selPhoTrkSumPtSolidConeDR04 < 6.)) | ((selPhoEta > 1.479) | (selPhoEta < -1.479))")
+        for branch in self._branches:
+            if "selPho" not in branch:
+                continue
+            df = df.Redefine(branch,f"{branch}[passBarrelIsoPresel]")
+        df = df.Redefine("nSelPhotons","selPhoPt.size()")
+        return df 
     
     def define_channels(self, df):
         return {
-            #"1pho": df.Filter("nSelPhotons == 1", "1nSelPho"),
             "1pho": df.Filter("nSelPhotons == 1 && SV_nLeptonic == 0 && SV_nHadronic == 0", "1nSelPho"),
-            #"ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
             "ge2pho": df.Filter("nSelPhotons >= 2 && SV_nLeptonic == 0 && SV_nHadronic == 0", "ge2nSelPho"),
             #"1pho1HadSV" : df.Filter("nSelPhotons == 1 && SV_nHadronic == 1 && SV_nLeptonic == 0","1nSelPho1HadSV"),
             #"1HadSV" : df.Filter("nSelPhotons == 0 && SV_nHadronic == 1 && SV_nLeptonic == 0","1HadSV")
         }
    
-    #TODO - make sure that barrel photons have isolation preselection applied as part of the CR/SR assignment 
     def define_regions(self, df, ch_name, mc):
-        #test custom filters
-        df_regidxs = (df
-                        .Define("selPhoIdx_BHTag",f"getTagIdx(selPho_beamHaloCNNScore,{self._threshs['bh']})")
-                        .Define("selPhoIdx_PBTag",f"getTagIdx(selPho_physBkgCNNScore,{self._threshs['pb']})")
-                        .Define("selPhoIdx_EEnonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,{self._threshs['EE_nonIso']})")
-                        .Define("selPhoIdx_EEIsoTag",f"getTagIdx(selPho_isoANNScore,{self._threshs['EE_iso']})")
-                        .Define("selPhoIdx_EBnonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,{self._threshs['EB_nonIso']})")
-                        .Define("selPhoIdx_EBIsoTag",f"getTagIdx(selPho_isoANNScore,{self._threshs['EB_iso']})")
-                        .Define("selPhoIdx_nonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,selPhoEta,{self._threshs['EB_nonIso']}, {self._threshs['EE_nonIso']})") #eta-inclusive region
-                    )
 
-        #df_regidxs.Filter("selPhoIdx_EEIsoTag == 1").Display(["selPhoIdx_EEIsoTag","selPho_isoANNScore","selPhoPt","selPhoWTimeSig"],45).Print()
+        df_regs = df.Define("regionIdx",f"getRegionIdx(selPhoWTimeSig, selPhoEta, selPho_beamHaloCNNScore, selPho_nonIsoANNScore, {self._threshs['prompt_timesig']}, {self._threshs['early_timesig']}, {self._threshs['late_timesig']}, {self._threshs['EE_nonIso']}, {self._threshs['EE_iso']}, {self._threshs['EB_nonIso']}, {self._threshs['EB_iso']}, {self._threshs['bh']}, {self._threshs['pb']})")
 
-        #nonisotag cuts
-        eecut_noniso = "(selPhoEta[selPhoIdx_EEnonIsoTag] > 1.479 || selPhoEta[selPhoIdx_EEnonIsoTag] < -1.479)"
-        ebcut_noniso = "(selPhoEta[selPhoIdx_EBnonIsoTag] < 1.479 && selPhoEta[selPhoIdx_EBnonIsoTag] > -1.479)"
-        ee_promptcut_noniso = f"(selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']})" 
-        eb_promptcut_noniso = f"(selPhoWTimeSig[selPhoIdx_EBnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EBnonIsoTag] < {self._threshs['prompt_timesig']})"
-        #barrel only
-        isopresel_cut_ebnoniso = f"selPhoEcalRHSumEtConeDR04[selPhoIdx_EBnonIsoTag] < 10. && selPhoHadTowOverEM[selPhoIdx_EBnonIsoTag] < 0.02 && selPhoTrkSumPtSolidConeDR04[selPhoIdx_EBnonIsoTag] < 6."
-
-        #isotag cuts
-        eecut_iso = "(selPhoEta[selPhoIdx_EEIsoTag] > 1.479 || selPhoEta[selPhoIdx_EEIsoTag] < -1.479)"
-        ebcut_iso = "(selPhoEta[selPhoIdx_EBIsoTag] < 1.479 && selPhoEta[selPhoIdx_EBIsoTag] > -1.479)"
-        ee_promptcut_iso = f"(selPhoWTimeSig[selPhoIdx_EEIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEIsoTag] < {self._threshs['prompt_timesig']})" 
-        eb_promptcut_iso = f"(selPhoWTimeSig[selPhoIdx_EBIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EBIsoTag] < {self._threshs['prompt_timesig']})"
-        #barrel only
-        isopresel_cut_ebiso = f"selPhoEcalRHSumEtConeDR04[selPhoIdx_EBIsoTag] < 10. && selPhoHadTowOverEM[selPhoIdx_EBIsoTag] < 0.02 && selPhoTrkSumPtSolidConeDR04[selPhoIdx_EBIsoTag] < 6."
-
- 
-        ee_loosenonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && "+ee_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && "+eecut_noniso 
-        ee_looseNotTightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && "+ee_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']} && "+eecut_noniso 
-        ee_tightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && "+ee_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']} && "+eecut_noniso 
-        print(f"loose EE_nonIso cut: {ee_loosenonIsoCut}")
-        #print(f"loose!tight EE_nonIso cut: {ee_looseNotTightnonIsoCut}")
-        #print(f"tight EE_NonIso cut: {ee_tightnonIsoCut}")
-
-        #eb_loosenonIsoCut = f"selPhoIdx_EBnonIsoTag != -1 && "+eb_promptcut+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut+" && selPhoIdx_EBIsoTag == -1" 
-        eb_loosenonIsoCut = f"((selPhoIdx_EBnonIsoTag == 1 && selPhoIdx_EBIsoTag == -1) || (selPhoIdx_EBnonIsoTag == 0)) && "+eb_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut_noniso+" && "+isopresel_cut_ebnoniso 
-        print(f"loose EB_nonIso cut: {eb_loosenonIsoCut}")
         regions = {
-            "earlyBHCR": df_regidxs.Filter(
-                f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] < {self._threshs['early_timesig']}",
+            "earlyBHCR": df_regs.Filter(
+                "regionIdx == 5",
                 f"earlyBHCR_{ch_name}"
             ),
-            "lateBHCR": df_regidxs.Filter(
-                f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] > {self._threshs['late_timesig']}",
+            "lateBHCR": df_regs.Filter(
+                "regionIdx == 6",
                 f"lateBHCR_{ch_name}"
             ),
-            "loosenonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh
-                ee_loosenonIsoCut,
+            "loosenonIsoEECR": df_regs.Filter( #score passes EE_nonIso thresh
+                "regionIdx == 1",
                 f"loosenonIsoEECR_{ch_name}"
             ),
-            "looseNotTightnonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
-                ee_loosenonIsoCut,
-                f"looseNotTightIsoEECR_{ch_name}"
-            ),
-            "tightnonIsoEECR": df_regidxs.Filter( #score needs to pass EE_veryNonIso thresh
-                ee_tightnonIsoCut,
-                f"tightnonIsoEECR_{ch_name}"
-            ),
-            "loosenonIsoEBCR": df_regidxs.Filter( #score passes EB_nonIso thresh
-                eb_loosenonIsoCut,
+            "loosenonIsoEBCR": df_regs.Filter( #score passes EE_nonIso thresh
+                "regionIdx == 3",
                 f"loosenonIsoEBCR_{ch_name}"
             ),
+            #"looseNotTightnonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
+            #    ee_loosenonIsoCut,
+            #    f"looseNotTightIsoEECR_{ch_name}"
+            #),
+            #"tightnonIsoEECR": df_regidxs.Filter( #score needs to pass EE_veryNonIso thresh
+            #    ee_tightnonIsoCut,
+            #    f"tightnonIsoEECR_{ch_name}"
+            #),
+            #"loosenonIsoEBCR": df_regidxs.Filter( #score passes EB_nonIso thresh
+            #    eb_loosenonIsoCut,
+            #    f"loosenonIsoEBCR_{ch_name}"
+            #),
         }
         #define kinematic sideband regions
-        regions[f"MsCR"] = df_regidxs.Filter(f"rjr_Ms0 < {self._msrs_bins['BHCR']['ms'][0]}")
-        regions[f"RsCR"] = df_regidxs.Filter(f"rjr_Rs0 < {self._msrs_bins['BHCR']['rs'][0]}")
-        regions[f"dxySigCR"] = df_regidxs.Filter("HadronicSV_dxySig[0] < 1000")       
+        regions[f"MsCR"] = df_regs.Filter(f"rjr_Ms0 < {self._msrs_bins['BHCR']['ms'][0]}")
+        regions[f"RsCR"] = df_regs.Filter(f"rjr_Rs0 < {self._msrs_bins['BHCR']['rs'][0]}")
+        regions[f"dxySigCR"] = df_regs.Filter("HadronicSV_dxySig[0] < 1000")       
 
-        df_regidxs.Display(["selPhoIdx_EBnonIsoTag","selPhoIdx_EBIsoTag","selPho_isoANNScore","selPho_nonIsoANNScore"]).Print()
-        #n0idx = df_regidxs.Filter(f"(selPhoIdx_EBnonIsoTag == 0) && "+eb_promptcut+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut).Count()
-        #n1idx = df_regidxs.Filter(f"(selPhoIdx_EBnonIsoTag == 1 && selPhoIdx_EBIsoTag == -1) && "+eb_promptcut+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut).Count()
-        #print("n0idx",n0idx.GetValue(),"n1idx",n1idx.GetValue())
- 
         #if MC, de#fine PB early/late regions and iso SRs
         if mc:
-            pbEarly = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] < {self._threshs['early_timesig']} && selPhoIdx_BHTag == -1"
-            pbLate = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] > {self._threshs['late_timesig']} && selPhoIdx_BHTag == -1"
-            regions["earlyPBCR"] = df_regidxs.Filter(pbEarly, f"earlyPBCR_{ch_name}")
-            regions["latePBSR"] = df_regidxs.Filter(pbLate, f"latePBSR_{ch_name}")
+            regions["earlyPBCR"] = df_regs.Filter("regionIdx == 7", f"earlyPBCR_{ch_name}")
+            regions["latePBSR"] = df_regs.Filter("regionIdx == 8", f"latePBSR_{ch_name}")
 
-            eeIso = f"selPhoIdx_EEIsoTag != -1 && "+ee_promptcut_iso+"  && "+eecut_iso
-            regions["isoEESR"] = df_regidxs.Filter(eeIso,f"isoEESR_{ch_name}")
-            ebIso = f"selPhoIdx_EBIsoTag != -1 && "+eb_promptcut_iso+" && "+ebcut_iso+" && selPhoIdx_EBnonIsoTag == -1 && "+isopresel_cut_ebiso
-            print("ebIsoCut",ebIso)
-            regions["isoEBSR"] = df_regidxs.Filter(ebIso,f"isoEBSR_{ch_name}")
+            regions["isoEESR"] = df_regs.Filter("regionIdx == 2",f"isoEESR_{ch_name}")
+            regions["isoEBSR"] = df_regs.Filter("regionIdx == 4",f"isoEBSR_{ch_name}")
             #do inclusive object-multiplicity-defined region
-            regions[ch_name] = df_regidxs
-        
+            regions[ch_name] = df_regs
+        regions["fail"] = df_regs.Filter("regionIdx < 0",f"fail_{ch_name}")
+        #10 ways to fail
+        if regions["fail"].Count().GetValue() > 10:
+            for i in range(1,13):
+                regions[f"failMode_{i}"] = regions["fail"].Filter(f"regionIdx == -{i}",f"fail_mode{i}_{ch_name}")
         return regions
    
     def do_ms_rs_cuts(self, df, reg_name):
@@ -413,7 +534,7 @@ class RJRAnalysis:
                 infilename = infilename.replace("_","\_")
                 selected_data[infilename] = []
 
-                df00 = RDataFrame("kuSkimTree", file, self._branches)
+                df00 = RDataFrame("kuSkimTree", file)
                 df0 = df00.Filter("rjr_Rs.size() > 0 && rjr_Ms.size() > 0") #in case these have size 0, can lead to undefined behavior
                 df1 = (
                     df0.Define("rjr_Rs0", "rjr_Rs[0]")
@@ -531,7 +652,7 @@ class RJRAnalysis:
                 chain.Add(f)
     
     
-            df00 = RDataFrame(chain, self._branches)
+            df00 = RDataFrame(chain)
             print("There are",df00.Filter("rjr_Ms.size() == 0 && nSelPhotons > 1").Count().GetValue(),"events without RJR info")
             df = df00.Filter("rjr_Rs.size() > 0 && rjr_Ms.size() > 0") #in case these have size 0, can lead to undefined behavior
             if checkForBadWgts:
@@ -560,18 +681,21 @@ class RJRAnalysis:
     
             #do all presel cuts
             df_presel = self.apply_preselection(df1)
+            #do barrel iso presel
+            df_isopresel = self.do_barrel_iso_presel(df_presel)
     
-            #print_photon_efficiencies(df_presel)
-    
-            channels = self.define_channels(df_presel)
-   
-            df_list = [df_presel]
+            channels = self.define_channels(df_isopresel)
+ 
+            df_list = [df_presel,df_isopresel]
             for ch_name, df_ch in channels.items():
                 print(" doing channel",ch_name)
                 regions = self.define_regions(df_ch, ch_name, mc)
                 for reg_name, df_reg in regions.items():
                     #print("  doing region", reg_name)
                     #define columns with lowest Rs/Ms cuts
+                    if "fail" in reg_name:
+                        df_list.append(df_reg)
+                        continue
                     df_reg = self.do_ms_rs_cuts(df_reg, reg_name)
                     self.fill_region_hists(
                         df_reg, procstr, reg_name, ch_name,
