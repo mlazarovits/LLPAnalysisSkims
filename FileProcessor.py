@@ -148,6 +148,8 @@ class FileProcessor():
             path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
         ]
 
+        self._procFiles["TotalBkg"] = self._procFiles["GJets"] + self._procFiles["QCD"] + self._procFiles["TTXJets"] + self._procFiles["WJets"] + self._procFiles["ZJets"]
+
     def field(self, name, val):
         # match exact value if given, otherwise wildcard number
         return rf"{name}-{val}" if val is not None else rf"{name}-[^_]+"
