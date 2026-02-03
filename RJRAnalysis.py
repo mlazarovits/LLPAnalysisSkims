@@ -47,17 +47,20 @@ class RJRAnalysis:
             "selPho_nonIsoANNScore",
             "selPho_isoANNScore",
             "selPhoEta",
+            "selPhoEcalRHSumEtConeDR04",
+            "selPhoHadTowOverEM",
+            "selPhoTrkSumPtSolidConeDR04"
             "selPhoWTimeSig"
         ]
         self._threshs = {
             "bh": "0.917252",
             "pb": "0.81476355",
             "EE_nonIso": "0.9290591",
-            "EB_nonIso": "-1", #pending
+            "EB_nonIso": "0.99661630", # 
             #"EE_veryNonIso": "0.9939665",
-            "EE_veryNonIso": "0.97",
+            "EE_veryNonIso": "0.99",
             "EE_iso" : "0.9994431", #80% efficiency, 5% bkg contanimination from SMS-GlGl ROC 
-            "EB_iso" : "-1", #pending 
+            "EB_iso" : "0.003383696", #1-nonIso threshold 
             "early_time": "-2",
             "late_time": "2",
             "prompt_time": "1",
@@ -93,6 +96,8 @@ class RJRAnalysis:
         self._msrs_bins["PBSR"] = {"ms" : array("d", [700, 1000, 10000]), "rs": array("d", [0.15, 0.3, 1.0])}
         self._msrs_bins["nonIsoEECR"] = {"ms": array("d", [700, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
         self._msrs_bins["isoEESR"] = {"ms": array("d", [500, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
+        self._msrs_bins["nonIsoEBCR"] = {"ms": array("d", [700, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
+        self._msrs_bins["isoEBSR"] = {"ms": array("d", [500, 1000, 10000]),"rs" :array("d", [0.15, 0.4, 1.0]) }
         self._msrs_bins["MsCR"] = {"ms" : array("d", [0, self._msrs_bins["BHCR"]['ms'][0]]), "rs": array("d", [0.15, 1.0])}
         self._msrs_bins["RsCR"] = {"ms" : array("d", [0, 10000]), "rs": array("d", [self._msrs_bins["BHCR"]['rs'][0], 1.0])}
         self._msrs_bins["dxySigCR"] = {"ms" : array("d", [1000, 10000]), "rs": array("d", [0.15, 1.0])}
@@ -129,8 +134,6 @@ class RJRAnalysis:
             }
         """
         )
-        #TODO - barrel/endcap for >1 photon
-        '''
         gInterpreter.Declare(
             """
             using ROOT::RVecF;
@@ -141,33 +144,64 @@ class RJRAnalysis:
                 else if(scores.size() == 1){
                     float lead_eta = eta[0];
                     if(fabs(lead_eta) < 1.479){
-                        if(barrel_score_thresh > barrel_score_thresh)
+                        if(scores[0] > barrel_score_thresh)
                             return 0;
                         else
                             return -1; 
                     }
                     else{
-                        if(endcap_score_thresh > endcap_score_thresh)
+                        if(scores[0] > endcap_score_thresh)
                             return 0;
                         else
                             return -1; 
                     }
                 }
                 else{
-                    if(scores[0] > score_thresh)
-                        return 0;
+                    float lead_eta = eta[0];
+                    float sublead_eta = eta[1];
+                    if(fabs(lead_eta) < 1.479){
+                        if(scores[0] > barrel_score_thresh)
+                            return 0;
+                        else{
+                            if(fabs(sublead_eta) < 1.479){ 
+                                if(scores[1] > barrel_score_thresh)
+                                    return 1;
+                                else
+                                    return -1;
+                            	
+                            }
+                            else{
+                                if(scores[1] > endcap_score_thresh)
+                                    return 1;
+                                else
+                                    return -1;
+                            }
+                        }
+                    }
                     else{
-                        if(scores[1] > score_thresh)
-                            return 1;
-                        else
-                            return -1;
+                        if(scores[0] > endcap_score_thresh)
+                            return 0;
+                        else{
+                            if(fabs(sublead_eta) < 1.479){ 
+                                if(scores[1] > barrel_score_thresh)
+                                    return 1;
+                                else
+                                    return -1;
+                            	
+                            }
+                            else{
+                                if(scores[1] > endcap_score_thresh)
+                                    return 1;
+                                else
+                                    return -1;
+                            }
+                        }
 
                     }
                 }
             }
         """
         )
-        ''' 
         
     
     def apply_preselection(self, df):
@@ -181,10 +215,11 @@ class RJRAnalysis:
             "1pho": df.Filter("nSelPhotons == 1 && SV_nLeptonic == 0 && SV_nHadronic == 0", "1nSelPho"),
             #"ge2pho": df.Filter("nSelPhotons >= 2", "ge2nSelPho"),
             "ge2pho": df.Filter("nSelPhotons >= 2 && SV_nLeptonic == 0 && SV_nHadronic == 0", "ge2nSelPho"),
-            "1pho1HadSV" : df.Filter("nSelPhotons == 1 && SV_nHadronic == 1 && SV_nLeptonic == 0","1nSelPho1HadSV"),
-            "1HadSV" : df.Filter("nSelPhotons == 0 && SV_nHadronic == 1 && SV_nLeptonic == 0","1HadSV")
+            #"1pho1HadSV" : df.Filter("nSelPhotons == 1 && SV_nHadronic == 1 && SV_nLeptonic == 0","1nSelPho1HadSV"),
+            #"1HadSV" : df.Filter("nSelPhotons == 0 && SV_nHadronic == 1 && SV_nLeptonic == 0","1HadSV")
         }
-    
+   
+    #TODO - make sure that barrel photons have isolation preselection applied as part of the CR/SR assignment 
     def define_regions(self, df, ch_name, mc):
         #test custom filters
         df_regidxs = (df
@@ -192,18 +227,40 @@ class RJRAnalysis:
                         .Define("selPhoIdx_PBTag",f"getTagIdx(selPho_physBkgCNNScore,{self._threshs['pb']})")
                         .Define("selPhoIdx_EEnonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,{self._threshs['EE_nonIso']})")
                         .Define("selPhoIdx_EEIsoTag",f"getTagIdx(selPho_isoANNScore,{self._threshs['EE_iso']})")
-                        #w/ barrel #.Define("selPhoIdx_nonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,selPhoEta,{self._threshs['EE_nonIso']})")
-                        #w/ barrel #.Define("selPhoIdx_IsoTag",f"getTagIdx(selPho_isoANNScore,selPhoEta, {self._threshs['EE_iso']})")
+                        .Define("selPhoIdx_EBnonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,{self._threshs['EB_nonIso']})")
+                        .Define("selPhoIdx_EBIsoTag",f"getTagIdx(selPho_isoANNScore,{self._threshs['EB_iso']})")
+                        .Define("selPhoIdx_nonIsoTag",f"getTagIdx(selPho_nonIsoANNScore,selPhoEta,{self._threshs['EB_nonIso']}, {self._threshs['EE_nonIso']})") #eta-inclusive region
                     )
 
         #df_regidxs.Filter("selPhoIdx_EEIsoTag == 1").Display(["selPhoIdx_EEIsoTag","selPho_isoANNScore","selPhoPt","selPhoWTimeSig"],45).Print()
 
-        ee_loosenonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']}" 
-        ee_looseNotTightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']}" 
-        ee_tightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']}" 
+        #nonisotag cuts
+        eecut_noniso = "(selPhoEta[selPhoIdx_EEnonIsoTag] > 1.479 || selPhoEta[selPhoIdx_EEnonIsoTag] < -1.479)"
+        ebcut_noniso = "(selPhoEta[selPhoIdx_EBnonIsoTag] < 1.479 && selPhoEta[selPhoIdx_EBnonIsoTag] > -1.479)"
+        ee_promptcut_noniso = f"(selPhoWTimeSig[selPhoIdx_EEnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEnonIsoTag] < {self._threshs['prompt_timesig']})" 
+        eb_promptcut_noniso = f"(selPhoWTimeSig[selPhoIdx_EBnonIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EBnonIsoTag] < {self._threshs['prompt_timesig']})"
+        #barrel only
+        isopresel_cut_ebnoniso = f"selPhoEcalRHSumEtConeDR04[selPhoIdx_EBnonIsoTag] < 10. && selPhoHadTowOverEM[selPhoIdx_EBnonIsoTag] < 0.02 && selPhoTrkSumPtSolidConeDR04[selPhoIdx_EBnonIsoTag] < 6."
+
+        #isotag cuts
+        eecut_iso = "(selPhoEta[selPhoIdx_EEIsoTag] > 1.479 || selPhoEta[selPhoIdx_EEIsoTag] < -1.479)"
+        ebcut_iso = "(selPhoEta[selPhoIdx_EBIsoTag] < 1.479 && selPhoEta[selPhoIdx_EBIsoTag] > -1.479)"
+        ee_promptcut_iso = f"(selPhoWTimeSig[selPhoIdx_EEIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEIsoTag] < {self._threshs['prompt_timesig']})" 
+        eb_promptcut_iso = f"(selPhoWTimeSig[selPhoIdx_EBIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EBIsoTag] < {self._threshs['prompt_timesig']})"
+        #barrel only
+        isopresel_cut_ebiso = f"selPhoEcalRHSumEtConeDR04[selPhoIdx_EBIsoTag] < 10. && selPhoHadTowOverEM[selPhoIdx_EBIsoTag] < 0.02 && selPhoTrkSumPtSolidConeDR04[selPhoIdx_EBIsoTag] < 6."
+
+ 
+        ee_loosenonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && "+ee_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && "+eecut_noniso 
+        ee_looseNotTightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && "+ee_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_nonIso']} && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] < {self._threshs['EE_veryNonIso']} && "+eecut_noniso 
+        ee_tightnonIsoCut = f"selPhoIdx_EEnonIsoTag != -1 && "+ee_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EEnonIsoTag] >= {self._threshs['EE_veryNonIso']} && "+eecut_noniso 
         print(f"loose EE_nonIso cut: {ee_loosenonIsoCut}")
-        print(f"loose!tight EE_nonIso cut: {ee_looseNotTightnonIsoCut}")
-        print(f"tight EE_NonIso cut: {ee_tightnonIsoCut}")
+        #print(f"loose!tight EE_nonIso cut: {ee_looseNotTightnonIsoCut}")
+        #print(f"tight EE_NonIso cut: {ee_tightnonIsoCut}")
+
+        #eb_loosenonIsoCut = f"selPhoIdx_EBnonIsoTag != -1 && "+eb_promptcut+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut+" && selPhoIdx_EBIsoTag == -1" 
+        eb_loosenonIsoCut = f"((selPhoIdx_EBnonIsoTag == 1 && selPhoIdx_EBIsoTag == -1) || (selPhoIdx_EBnonIsoTag == 0)) && "+eb_promptcut_noniso+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut_noniso+" && "+isopresel_cut_ebnoniso 
+        print(f"loose EB_nonIso cut: {eb_loosenonIsoCut}")
         regions = {
             "earlyBHCR": df_regidxs.Filter(
                 f"selPhoIdx_BHTag != -1 && selPhoWTimeSig[selPhoIdx_BHTag] < {self._threshs['early_timesig']}",
@@ -225,21 +282,33 @@ class RJRAnalysis:
                 ee_tightnonIsoCut,
                 f"tightnonIsoEECR_{ch_name}"
             ),
+            "loosenonIsoEBCR": df_regidxs.Filter( #score passes EB_nonIso thresh
+                eb_loosenonIsoCut,
+                f"loosenonIsoEBCR_{ch_name}"
+            ),
         }
         #define kinematic sideband regions
         regions[f"MsCR"] = df_regidxs.Filter(f"rjr_Ms0 < {self._msrs_bins['BHCR']['ms'][0]}")
         regions[f"RsCR"] = df_regidxs.Filter(f"rjr_Rs0 < {self._msrs_bins['BHCR']['rs'][0]}")
         regions[f"dxySigCR"] = df_regidxs.Filter("HadronicSV_dxySig[0] < 1000")       
+
+        df_regidxs.Display(["selPhoIdx_EBnonIsoTag","selPhoIdx_EBIsoTag","selPho_isoANNScore","selPho_nonIsoANNScore"]).Print()
+        #n0idx = df_regidxs.Filter(f"(selPhoIdx_EBnonIsoTag == 0) && "+eb_promptcut+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut).Count()
+        #n1idx = df_regidxs.Filter(f"(selPhoIdx_EBnonIsoTag == 1 && selPhoIdx_EBIsoTag == -1) && "+eb_promptcut+f" && selPho_nonIsoANNScore[selPhoIdx_EBnonIsoTag] >= {self._threshs['EB_nonIso']} && "+ebcut).Count()
+        #print("n0idx",n0idx.GetValue(),"n1idx",n1idx.GetValue())
  
         #if MC, de#fine PB early/late regions and iso SRs
         if mc:
-            pbEarly = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] < {self._threshs['early_timesig']}"
-            pbLate = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] > {self._threshs['late_timesig']}"
+            pbEarly = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] < {self._threshs['early_timesig']} && selPhoIdx_BHTag == -1"
+            pbLate = f"selPhoIdx_PBTag != -1 && selPhoWTimeSig[selPhoIdx_PBTag] > {self._threshs['late_timesig']} && selPhoIdx_BHTag == -1"
             regions["earlyPBCR"] = df_regidxs.Filter(pbEarly, f"earlyPBCR_{ch_name}")
             regions["latePBSR"] = df_regidxs.Filter(pbLate, f"latePBSR_{ch_name}")
-    
-            eeIso = f"selPhoIdx_EEIsoTag != -1 &&  selPhoWTimeSig[selPhoIdx_EEIsoTag] > -{self._threshs['prompt_timesig']} && selPhoWTimeSig[selPhoIdx_EEIsoTag] < {self._threshs['prompt_timesig']}"
+
+            eeIso = f"selPhoIdx_EEIsoTag != -1 && "+ee_promptcut_iso+"  && "+eecut_iso
             regions["isoEESR"] = df_regidxs.Filter(eeIso,f"isoEESR_{ch_name}")
+            ebIso = f"selPhoIdx_EBIsoTag != -1 && "+eb_promptcut_iso+" && "+ebcut_iso+" && selPhoIdx_EBnonIsoTag == -1 && "+isopresel_cut_ebiso
+            print("ebIsoCut",ebIso)
+            regions["isoEBSR"] = df_regidxs.Filter(ebIso,f"isoEBSR_{ch_name}")
             #do inclusive object-multiplicity-defined region
             regions[ch_name] = df_regidxs
         
@@ -586,7 +655,7 @@ if __name__ == "__main__":
 
     # optional argument with default
     parser.add_argument(
-        "--ofilename-extra",
+        "--ofilename-extra","-e",
         dest="ofilename_extra",
         type=str,
         default="",
