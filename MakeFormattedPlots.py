@@ -83,8 +83,8 @@ if __name__ == "__main__":
  
     for proc in procs:
         #make 2D Ms-Rs plots - nonIsoEECR (data and MC bkg), BHCR (data)
-        channels = ["1pho", "ge2pho"]
-        regions = ["earlyBHCR","lateBHCR","loosenonIsoEECR"]
+        channels = ["1pho", "ge2pho","1HadSV"]
+        regions = ["earlyBHCR","lateBHCR","loosenonIsoEECR","dxySigCR"]
         if 'MsRs' in args.obs:
             #iterate through and format each
             for channel in channels:
