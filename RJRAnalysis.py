@@ -148,7 +148,6 @@ class RJRAnalysis:
                 float lead_isoScore = (lead_nonIsoScore == -999 ? -999 : (1 - noniso_scores[0]));
                 float lead_BHscore = bh_scores[0];
                 float lead_PBscore = (1 - bh_scores[0]);
-
                 //loosest isolation cut - photons not passing this do not make it into the analysis
                 float EE_veryveryNonIso = 0.9939665;
                 int lead_fail = 0;
@@ -510,13 +509,13 @@ class RJRAnalysis:
         h1d.append(
             df_lead.Histo1D(
 	            (f"beamHaloScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
-                "leadBHScore", "evtFillWgt"
+                "leadBHScore"
             )
         )
         h1d.append(
             df_lead.Histo1D(
 	            (f"isoScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
-                "leadIsoScore", "evtFillWgt"
+                "leadIsoScore"
             )
         )
         if "ge2pho" in ch_name:
@@ -524,13 +523,13 @@ class RJRAnalysis:
             h1d.append(
                 df_sublead.Histo1D(
 	                (f"beamHaloScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
-                    "subleadBHScore", "evtFillWgt"
+                    "subleadBHScore"
                 )
             )
             h1d.append(
                 df_sublead.Histo1D(
 	                (f"isoScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
-                    "subleadIsoScore", "evtFillWgt"
+                    "subleadIsoScore"
                 )
             )
 
@@ -578,10 +577,12 @@ class RJRAnalysis:
     
                 #do all presel cuts
                 df_presel = self.apply_preselection(df1)
+                #do barrel iso presel
+                df_isopresel = self.do_barrel_iso_presel(df_presel)
    
-                channels = self.define_channels(df_presel)
+                channels = self.define_channels(df_isopresel)
    
-                df_list = [df_presel]
+                df_list = [df_presel, df_isopresel]
                 region_list = []
                 for ch_name, df_ch in channels.items():
                     print(" doing channel",ch_name)
@@ -599,14 +600,14 @@ class RJRAnalysis:
                     else:
                         if(show_output):
                             print(line)
-                            print("parsed_eff",parsed_eff)
-                    selected_data[infilename].append(parsed_eff) 
+                            #print("parsed_eff",parsed_eff)
+                    selected_data[infilename].append(parsed_eff)
             # write LaTeX table
             outfile = f"{procstr}_eff_table"
             if args.ofilename_extra is not None:
                 outfile += f"_{args.ofilename_extra}"
             outfile += ".tex" 
-            eff_parser.write_latex_table(outfile, selected_data)
+            self._eff_parser.write_latex_table(outfile, selected_data)
             print("Wrote efficiencies for process",proc,"to",outfile)
 
     def GetProcessName(self, proc, mGl = None, mN2 = None, mN1 = None, ctau = None):
