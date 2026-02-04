@@ -68,6 +68,7 @@ class FileProcessor():
             path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2500_mN2-1500_mN1-1000_ct0p1_rjrskim.root",
 	]
         
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/"
         self._procFiles["WJets"] = [
         	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-100To200_rjrskim.root",
         	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-1200To2500_rjrskim.root",
@@ -96,7 +97,6 @@ class FileProcessor():
         	path+"TTXJets_R18_SVIPM100_v31_ttZJets_rjrskim.root"
         ]
         
-        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/"
         self._procFiles["METPD16"] = [
             path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016B_rjrskim.root",
             path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016C_rjrskim.root",
