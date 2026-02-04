@@ -56,10 +56,10 @@ class RJRAnalysis:
             "bh": "0.917252",
             "pb": "0.81476355",
             "EE_nonIso": "0.9290591",
-            "EB_nonIso": "0.99661630", #
             "EE_veryNonIso": "0.95",
             "EE_veryveryNonIso" : "0.9939665",
             "EE_iso" : "0.9994431", #80% efficiency, 5% bkg contanimination from SMS-GlGl ROC 
+            "EB_nonIso": "0.99661630", #original - 2/4
             "EB_iso" : "0.003383696", #1-nonIso threshold 
             "early_time": "-2",
             "late_time": "2",
@@ -145,13 +145,12 @@ class RJRAnalysis:
                 bool lead_early = timesigs[0] < early_timesig;
                 bool lead_late = timesigs[0] > late_timesig;
                 float lead_nonIsoScore = noniso_scores[0];
-                float lead_isoScore = lead_nonIsoScore = -999 ? -999 : (1 - noniso_scores[0]);
+                float lead_isoScore = (lead_nonIsoScore == -999 ? -999 : (1 - noniso_scores[0]));
                 float lead_BHscore = bh_scores[0];
                 float lead_PBscore = (1 - bh_scores[0]);
 
                 //loosest isolation cut - photons not passing this do not make it into the analysis
                 float EE_veryveryNonIso = 0.9939665;
-
                 int lead_fail = 0;
                 if(lead_prompt){
                     if(lead_endcap){
@@ -219,7 +218,7 @@ class RJRAnalysis:
                 bool sublead_late = timesigs[1] > late_timesig;
                 
                 float sublead_nonIsoScore = noniso_scores[1];
-                float sublead_isoScore = sublead_nonIsoScore = -999 ? -999 : (1 - noniso_scores[0]);
+                float sublead_isoScore = (sublead_nonIsoScore == -999 ? -999 : (1 - noniso_scores[1]));
                 float sublead_BHscore = bh_scores[1];
                 float sublead_PBscore = (1 - bh_scores[1]);
                 if(sublead_prompt){
@@ -381,10 +380,10 @@ class RJRAnalysis:
     def define_regions(self, df, ch_name, mc):
         df_regs = df.Define("regionIdx",f"getRegionIdx(selPhoWTimeSig, selPhoEta, selPho_beamHaloCNNScore, selPho_nonIsoANNScore, {self._threshs['prompt_timesig']}, {self._threshs['early_timesig']}, {self._threshs['late_timesig']}, {self._threshs['EE_nonIso']}, {self._threshs['EE_iso']}, {self._threshs['EB_nonIso']}, {self._threshs['EB_iso']}, {self._threshs['bh']}, {self._threshs['pb']})")
         veryloosenonIsoEECR = f"(regionIdx == 1) && (selPho_nonIsoANNScore[0] >= {self._threshs['EE_veryNonIso']})"
-        loosenotvlnonIsoEECR = f"(regionIdx == 1 && selPho_nonIsoANNScore[0] < {self._threshs['EE_veryNonIso']})"
+        loosenotvlnonIsoEECR = f"((regionIdx == 1) && (selPho_nonIsoANNScore[0] < {self._threshs['EE_veryNonIso']}))"
         if "ge2pho" in ch_name: 
-            veryloosenonIsoEECR += f" || ( regionIdx == 100 && selPho_nonIsoANNScore[1] >= {self._threshs['EE_veryNonIso']})"
-            loosenotvlnonIsoEECR += f" || (regionIdx == 1 && selPho_nonIsoANNScore[1] < {self._threshs['EE_veryNonIso']})"
+            veryloosenonIsoEECR += f" || ((regionIdx == 100) && (selPho_nonIsoANNScore[1] >= {self._threshs['EE_veryNonIso']}))"
+            loosenotvlnonIsoEECR += f" || ((regionIdx == 100) && (selPho_nonIsoANNScore[1] < {self._threshs['EE_veryNonIso']}))"
 
  
         #print("veryloosenonIsoEECR",veryloosenonIsoEECR)
