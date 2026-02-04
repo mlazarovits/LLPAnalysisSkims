@@ -157,7 +157,7 @@ class RJRAnalysis:
                 if(lead_prompt){
                     if(lead_endcap){
                         if(lead_nonIsoScore >= EE_veryNonIso){
-                            lead_fail = -11;
+                            lead_fail = -1;
                         }
                         else if(lead_nonIsoScore >= nonisoEE_scorethresh && lead_nonIsoScore < EE_veryNonIso){
                             return 1;
@@ -166,7 +166,7 @@ class RJRAnalysis:
                             return 2;
                         }
                         else{
-                            lead_fail = -1;
+                            lead_fail = -2;
                         }
                     }
                     else{ //(barrel)
@@ -177,7 +177,7 @@ class RJRAnalysis:
                             return 4;
                         }
                         else{
-                            lead_fail = -2;
+                            lead_fail = -3;
                         }
                     }
                 }
@@ -190,7 +190,7 @@ class RJRAnalysis:
                             return 6;
                         }
                         else{
-                            lead_fail = -3;
+                            lead_fail = -4;
                         }
                     }
                     else if(lead_PBscore >= pb_scorethresh){
@@ -201,11 +201,11 @@ class RJRAnalysis:
                             return 8;
                         }
                         else{
-                            lead_fail = -4;
+                            lead_fail = -5;
                         }
                     }
                     else{
-                        lead_fail = -5;
+                        lead_fail = -6;
                     }
                 }
                 //do only one photon case too!
@@ -226,56 +226,56 @@ class RJRAnalysis:
                 if(sublead_prompt){
                     if(sublead_endcap){
                         if(sublead_nonIsoScore >= EE_veryNonIso){
-                            return -12;
+                            return -100;
                         }
                         else if(sublead_nonIsoScore >= nonisoEE_scorethresh && sublead_nonIsoScore < EE_veryNonIso){
-                            return 1;
+                            return 100;
                         }
                         else if(sublead_isoScore >= isoEE_scorethresh){
-                            return 2;
+                            return 200;
                         }
                         else{
-                            return -6;
+                            return -200;
                         }
                     }
                     else{ //(barrel)
                         if(sublead_nonIsoScore >= nonisoEB_scorethresh){
-                            return 3;
+                            return 300;
                         }
                         else if(sublead_isoScore >= isoEB_scorethresh){
-                            return 4;
+                            return 400;
                         }
                         else{
-                            return -7;
+                            return -300;
                         }
                     }
                 }
                 else{ //(sublead nonprompt)
                     if(sublead_BHscore >= bh_scorethresh){
                         if(sublead_early){
-                            return 5;
+                            return 500;
                         }
                         else if(sublead_late){
-                            return 6;
+                            return 600;
                         }
                         else{
-                            return -8;
+                            return -400;
                         }
                     }
                     else if(sublead_PBscore >= pb_scorethresh){
                         if(sublead_early){
-                            return 7;
+                            return 700;
                         }
                         else if(sublead_late){
-                            return 8;
+                            return 800;
                         }
                         else{
 cout << "sublead timesig " << timesigs[1] << endl;
-                            return -9;
+                            return -500;
                         }
                     }
                     else{
-                        return -10;
+                        return -600;
                     }
                 }
                 
@@ -381,24 +381,39 @@ cout << "sublead timesig " << timesigs[1] << endl;
         }
    
     def define_regions(self, df, ch_name, mc):
-
         df_regs = df.Define("regionIdx",f"getRegionIdx(selPhoWTimeSig, selPhoEta, selPho_beamHaloCNNScore, selPho_nonIsoANNScore, {self._threshs['prompt_timesig']}, {self._threshs['early_timesig']}, {self._threshs['late_timesig']}, {self._threshs['EE_nonIso']}, {self._threshs['EE_iso']}, {self._threshs['EB_nonIso']}, {self._threshs['EB_iso']}, {self._threshs['bh']}, {self._threshs['pb']})")
+        veryloosenonIsoEECR = f"(regionIdx == 1) && (selPho_nonIsoANNScore[0] >= {self._threshs['EE_veryNonIso']})"
+        loosenotvlnonIsoEECR = f"(regionIdx == 1 && selPho_nonIsoANNScore[0] < {self._threshs['EE_veryNonIso']})"
+        if "ge2pho" in ch_name: 
+            veryloosenonIsoEECR += f" || ( regionIdx == 100 && selPho_nonIsoANNScore[1] >= {self._threshs['EE_veryNonIso']})"
+            loosenotvlnonIsoEECR += f" || (regionIdx == 1 && selPho_nonIsoANNScore[1] < {self._threshs['EE_veryNonIso']})"
+
+ 
+        print("veryloosenonIsoEECR",veryloosenonIsoEECR)
 
         regions = {
             "earlyBHCR": df_regs.Filter(
-                "regionIdx == 5",
+                "regionIdx == 5 || regionIdx == 500",
                 f"earlyBHCR_{ch_name}"
             ),
             "lateBHCR": df_regs.Filter(
-                "regionIdx == 6",
+                "regionIdx == 6 || regionIdx == 600",
                 f"lateBHCR_{ch_name}"
             ),
             "loosenonIsoEECR": df_regs.Filter( #score passes EE_nonIso thresh
-                "regionIdx == 1",
+                "regionIdx == 1 || regionIdx == 700",
                 f"loosenonIsoEECR_{ch_name}"
             ),
+            "veryloosenonIsoEECR": df_regs.Filter( #score passes EE_nonIso thresh
+                veryloosenonIsoEECR,
+                f"veryloosenonIsoEECR_{ch_name}"
+            ),
+            "loosenotvlnonIsoEECR": df_regs.Filter( #score passes EE_nonIso thresh
+                loosenotvlnonIsoEECR,
+                f"loosenotvlnonIsoEECR_{ch_name}"
+            ),
             "loosenonIsoEBCR": df_regs.Filter( #score passes EE_nonIso thresh
-                "regionIdx == 3",
+                "regionIdx == 3 || regionIdx == 300",
                 f"loosenonIsoEBCR_{ch_name}"
             ),
             #"looseNotTightnonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
@@ -421,18 +436,18 @@ cout << "sublead timesig " << timesigs[1] << endl;
 
         #if MC, de#fine PB early/late regions and iso SRs
         if mc:
-            regions["earlyPBCR"] = df_regs.Filter("regionIdx == 7", f"earlyPBCR_{ch_name}")
-            regions["latePBSR"] = df_regs.Filter("regionIdx == 8", f"latePBSR_{ch_name}")
+            regions["earlyPBCR"] = df_regs.Filter("regionIdx == 7 || regionIdx == 700", f"earlyPBCR_{ch_name}")
+            regions["latePBSR"] = df_regs.Filter("regionIdx == 8 || regionIdx == 800", f"latePBSR_{ch_name}")
 
-            regions["isoEESR"] = df_regs.Filter("regionIdx == 2",f"isoEESR_{ch_name}")
-            regions["isoEBSR"] = df_regs.Filter("regionIdx == 4",f"isoEBSR_{ch_name}")
+            regions["isoEESR"] = df_regs.Filter("regionIdx == 2 || regionIdx == 200",f"isoEESR_{ch_name}")
+            regions["isoEBSR"] = df_regs.Filter("regionIdx == 4 || regionIdx == 400",f"isoEBSR_{ch_name}")
             #do inclusive object-multiplicity-defined region
             regions[ch_name] = df_regs
         regions["fail"] = df_regs.Filter("regionIdx < 0",f"fail_{ch_name}")
-        #10 ways to fail
         if regions["fail"].Count().GetValue() > 10:
-            for i in range(1,13):
+            for i in range(1,7):
                 regions[f"failMode_{i}"] = regions["fail"].Filter(f"regionIdx == -{i}",f"fail_mode{i}_{ch_name}")
+                regions[f"failMode_{i*100}"] = regions["fail"].Filter(f"regionIdx == -{i*100}",f"fail_mode{i*100}_{ch_name}")
         return regions
    
     def do_ms_rs_cuts(self, df, reg_name):
@@ -504,6 +519,35 @@ cout << "sublead timesig " << timesigs[1] << endl;
                 "selPhoWTimeSig", "evtFillWgt"
             )
         )
+        
+        #discriminator distributions
+        df_lead = df.Define("leadBHScore","selPho_beamHaloCNNScore[0]").Define("leadIsoScore","selPho_isoANNScore[0]")
+        h1d.append(
+            df_lead.Histo1D(
+	            (f"beamHaloScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+                "leadBHScore", "evtFillWgt"
+            )
+        )
+        h1d.append(
+            df_lead.Histo1D(
+	            (f"isoScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+                "leadIsoScore", "evtFillWgt"
+            )
+        )
+        if "ge2pho" in ch_name:
+            df_sublead = df.Define("subleadBHScore","selPho_beamHaloCNNScore[1]").Define("subleadIsoScore","selPho_isoANNScore[1]")
+            h1d.append(
+                df_sublead.Histo1D(
+	                (f"beamHaloScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+                    "subleadBHScore", "evtFillWgt"
+                )
+            )
+            h1d.append(
+                df_sublead.Histo1D(
+	                (f"isoScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+                    "subleadIsoScore", "evtFillWgt"
+                )
+            )
 
 
 
