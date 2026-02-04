@@ -57,8 +57,8 @@ class RJRAnalysis:
             "pb": "0.81476355",
             "EE_nonIso": "0.9290591",
             "EB_nonIso": "0.99661630", #
-            #"EE_veryNonIso": "0.9939665",
-            "EE_veryNonIso": "0.99",
+            "EE_veryNonIso": "0.95",
+            "EE_veryveryNonIso" : "0.9939665",
             "EE_iso" : "0.9994431", #80% efficiency, 5% bkg contanimination from SMS-GlGl ROC 
             "EB_iso" : "0.003383696", #1-nonIso threshold 
             "early_time": "-2",
@@ -145,21 +145,20 @@ class RJRAnalysis:
                 bool lead_early = timesigs[0] < early_timesig;
                 bool lead_late = timesigs[0] > late_timesig;
                 float lead_nonIsoScore = noniso_scores[0];
-                float lead_isoScore = (1 - noniso_scores[0]);
+                float lead_isoScore = lead_nonIsoScore = -999 ? -999 : (1 - noniso_scores[0]);
                 float lead_BHscore = bh_scores[0];
                 float lead_PBscore = (1 - bh_scores[0]);
 
                 //loosest isolation cut - photons not passing this do not make it into the analysis
-                float EE_veryNonIso = 0.9939665;
-
+                float EE_veryveryNonIso = 0.9939665;
 
                 int lead_fail = 0;
                 if(lead_prompt){
                     if(lead_endcap){
-                        if(lead_nonIsoScore >= EE_veryNonIso){
+                        if(lead_nonIsoScore >= EE_veryveryNonIso){
                             lead_fail = -1;
                         }
-                        else if(lead_nonIsoScore >= nonisoEE_scorethresh && lead_nonIsoScore < EE_veryNonIso){
+                        else if(lead_nonIsoScore >= nonisoEE_scorethresh && lead_nonIsoScore < EE_veryveryNonIso){
                             return 1;
                         }
                         else if(lead_isoScore >= isoEE_scorethresh){
@@ -209,9 +208,9 @@ class RJRAnalysis:
                     }
                 }
                 //do only one photon case too!
-                if(timesigs.size() < 2 && lead_fail < 0)
+                if(timesigs.size() < 2 && lead_fail < 0){
                     return lead_fail;
-
+                }
 
                 //check sublead
                 bool sublead_prompt = (timesigs[1] < prompt_timesig) && (timesigs[1] > -prompt_timesig);
@@ -219,16 +218,16 @@ class RJRAnalysis:
                 bool sublead_early = timesigs[1] < early_timesig;
                 bool sublead_late = timesigs[1] > late_timesig;
                 
-                float sublead_nonIsoScore = noniso_scores[0];
-                float sublead_isoScore = (1 - noniso_scores[0]);
-                float sublead_BHscore = bh_scores[0];
-                float sublead_PBscore = (1 - bh_scores[0]);
+                float sublead_nonIsoScore = noniso_scores[1];
+                float sublead_isoScore = sublead_nonIsoScore = -999 ? -999 : (1 - noniso_scores[0]);
+                float sublead_BHscore = bh_scores[1];
+                float sublead_PBscore = (1 - bh_scores[1]);
                 if(sublead_prompt){
                     if(sublead_endcap){
-                        if(sublead_nonIsoScore >= EE_veryNonIso){
+                        if(sublead_nonIsoScore >= EE_veryveryNonIso){
                             return -100;
                         }
-                        else if(sublead_nonIsoScore >= nonisoEE_scorethresh && sublead_nonIsoScore < EE_veryNonIso){
+                        else if(sublead_nonIsoScore >= nonisoEE_scorethresh && sublead_nonIsoScore < EE_veryveryNonIso){
                             return 100;
                         }
                         else if(sublead_isoScore >= isoEE_scorethresh){
@@ -270,7 +269,6 @@ class RJRAnalysis:
                             return 800;
                         }
                         else{
-cout << "sublead timesig " << timesigs[1] << endl;
                             return -500;
                         }
                     }
@@ -389,7 +387,7 @@ cout << "sublead timesig " << timesigs[1] << endl;
             loosenotvlnonIsoEECR += f" || (regionIdx == 1 && selPho_nonIsoANNScore[1] < {self._threshs['EE_veryNonIso']})"
 
  
-        print("veryloosenonIsoEECR",veryloosenonIsoEECR)
+        #print("veryloosenonIsoEECR",veryloosenonIsoEECR)
 
         regions = {
             "earlyBHCR": df_regs.Filter(
@@ -401,7 +399,7 @@ cout << "sublead timesig " << timesigs[1] << endl;
                 f"lateBHCR_{ch_name}"
             ),
             "loosenonIsoEECR": df_regs.Filter( #score passes EE_nonIso thresh
-                "regionIdx == 1 || regionIdx == 700",
+                "regionIdx == 1 || regionIdx == 100",
                 f"loosenonIsoEECR_{ch_name}"
             ),
             "veryloosenonIsoEECR": df_regs.Filter( #score passes EE_nonIso thresh
@@ -416,18 +414,6 @@ cout << "sublead timesig " << timesigs[1] << endl;
                 "regionIdx == 3 || regionIdx == 300",
                 f"loosenonIsoEBCR_{ch_name}"
             ),
-            #"looseNotTightnonIsoEECR": df_regidxs.Filter( #score passes EE_nonIso thresh, but less than EE_veryNonIso thresh
-            #    ee_loosenonIsoCut,
-            #    f"looseNotTightIsoEECR_{ch_name}"
-            #),
-            #"tightnonIsoEECR": df_regidxs.Filter( #score needs to pass EE_veryNonIso thresh
-            #    ee_tightnonIsoCut,
-            #    f"tightnonIsoEECR_{ch_name}"
-            #),
-            #"loosenonIsoEBCR": df_regidxs.Filter( #score passes EB_nonIso thresh
-            #    eb_loosenonIsoCut,
-            #    f"loosenonIsoEBCR_{ch_name}"
-            #),
         }
         #define kinematic sideband regions
         regions[f"MsCR"] = df_regs.Filter(f"rjr_Ms0 < {self._msrs_bins['BHCR']['ms'][0]}")
@@ -524,13 +510,13 @@ cout << "sublead timesig " << timesigs[1] << endl;
         df_lead = df.Define("leadBHScore","selPho_beamHaloCNNScore[0]").Define("leadIsoScore","selPho_isoANNScore[0]")
         h1d.append(
             df_lead.Histo1D(
-	            (f"beamHaloScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+	            (f"beamHaloScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
                 "leadBHScore", "evtFillWgt"
             )
         )
         h1d.append(
             df_lead.Histo1D(
-	            (f"isoScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+	            (f"isoScoreLead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
                 "leadIsoScore", "evtFillWgt"
             )
         )
@@ -538,13 +524,13 @@ cout << "sublead timesig " << timesigs[1] << endl;
             df_sublead = df.Define("subleadBHScore","selPho_beamHaloCNNScore[1]").Define("subleadIsoScore","selPho_isoANNScore[1]")
             h1d.append(
                 df_sublead.Histo1D(
-	                (f"beamHaloScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+	                (f"beamHaloScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
                     "subleadBHScore", "evtFillWgt"
                 )
             )
             h1d.append(
                 df_sublead.Histo1D(
-	                (f"isoScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, -20, 20),
+	                (f"isoScoreSublead_{proc_name}_{ch_name}_{reg_name}", "", 50, 0, 1.01),
                     "subleadIsoScore", "evtFillWgt"
                 )
             )
