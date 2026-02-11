@@ -6,33 +6,39 @@ import numpy as np
 class FileProcessor():
     def __init__(self):
         self._procFiles = {}
-        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/"
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v47_noSMSGenFlags_FastSimAOD/"
+        self._procFiles["SMS_gogoGZ_fast"] = [
+                path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2200_ct0p1_FASTSIMAOD_rjrskim.root",
+                path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p5_FASTSIMAOD_rjrskim.root",
+        ]
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v47/"
         
         self._procFiles["SMS_gogoGZ"] = [
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2150_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2150_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2350_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2400_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2300_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2350_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1000_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1500_ct0p5_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-1000_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2150_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2150_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2200_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1500_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2300_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2350_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2350_ct0p1_rjrskim.root",
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2400_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2150_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2150_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2350_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2400_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2300_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2350_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1000_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1500_ct0p5_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-1000_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-500_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2150_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2150_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2200_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2000_mN1-1500_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2300_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2400_mN1-2350_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2350_ct0p1_rjrskim.root",
+            path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2500_mN2-2450_mN1-2400_ct0p1_rjrskim.root",
         ]
+        
         
         self._procFiles["SMS_test_prompt"] = [
             path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p1_rjrskim.root"
@@ -148,7 +154,12 @@ class FileProcessor():
             path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
         ]
 
+        self._procFiles["GJets_test"] = [
+            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
+        ]
+
         self._procFiles["TotalBkg"] = self._procFiles["GJets"] + self._procFiles["QCD"] + self._procFiles["TTXJets"] + self._procFiles["WJets"] + self._procFiles["ZJets"]
+
 
     def field(self, name, val):
         # match exact value if given, otherwise wildcard number
