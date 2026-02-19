@@ -12,30 +12,37 @@ FASTSIM_MARKER = 21
 
 dist = {
 	'nSelPhotons': {'xlabel': 'Number of selected photons',	'nbins': 5,  'xmin': 0,	'xmax': 5},
-	'nIsoPho': {'xlabel': 'Number of signal photons', 'nbins': 5,  'xmin': 0,	'xmax': 5},
+	'nIsoPho': {'xlabel': 'Number of iso photons', 'nbins': 5,  'xmin': 0,	'xmax': 5},
 	'selPhoEta': {'xlabel': 'Selected Photon Pseudorapidity #eta',	 'nbins': 50,  'xmin': -3,	'xmax': 3},
 	'isoPhoEta': {'xlabel': 'Signal Photon Pseudorapidity #eta',  'nbins': 50,  'xmin': -3,	'xmax': 3},
+	'selPhoEtaIso': {'xlabel': 'Signal Photon Pseudorapidity #eta',  'nbins': 50,  'xmin': -3,	'xmax': 3},
 	'rawSeedTime': {'xlabel': 'selected seed time [ns]',	 'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'rawSeedTimeIso': {'xlabel': 'signal seed time [ns]',	  'nbins': 50,  'xmin': -3,   'xmax': 3},
+	'rawSeedTimeIso': {'xlabel': 'iso seed time [ns]',	  'nbins': 50,  'xmin': -3,   'xmax': 3},
 	'rawSeedTimeLead': {'xlabel': 'lead selected seed time [ns]',	   'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'rawSeedTimeLeadIso': {'xlabel': 'lead signal seed time [ns]',	  'nbins': 50,  'xmin': -3,   'xmax': 3},
+	'rawSeedTimeLeadIso': {'xlabel': 'lead iso seed time [ns]',	  'nbins': 50,  'xmin': -3,   'xmax': 3},
 	'rawSeedTimeSublead': {'xlabel': 'sublead selected seed time [ns]',	 'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'rawSeedTimeSubleadIso': {'xlabel': 'sublead signal seed time [ns]',	 'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'weightedTime': {'xlabel': 'selected weighted time [ns]',	 'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'weightedTimeIso': {'xlabel': 'signal weighted time [ns]',	  'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'weightedTimeLead': {'xlabel': 'lead selected weighted time [ns]',	   'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'weightedTimeLeadIso': {'xlabel': 'lead signal weighted time [ns]',	  'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'weightedTimeSublead': {'xlabel': 'sublead selected weighted time [ns]',	 'nbins': 50,  'xmin': -3,   'xmax': 3},
-	'weightedTimeSubleadIso': {'xlabel': 'sublead signal weighted time [ns]',	 'nbins': 50,  'xmin': -3,   'xmax': 3},
+	'rawSeedTimeSubleadIso': {'xlabel': 'sublead iso seed time [ns]',	 'nbins': 50,  'xmin': -3,   'xmax': 3},
+	'weightedTime': {'xlabel': 'selected weighted time [ns]',	 'nbins': 50,  'xmin': -5,   'xmax': 5},
+	'weightedTimeIso': {'xlabel': 'iso weighted time [ns]',	  'nbins': 50,  'xmin': -5,   'xmax': 5},
+	'weightedTimeLead': {'xlabel': 'lead selected weighted time [ns]',	   'nbins': 50,  'xmin': -5,   'xmax': 5},
+	'weightedTimeLeadIso': {'xlabel': 'lead iso weighted time [ns]',	  'nbins': 50,  'xmin': -5,   'xmax': 5},
+	'weightedTimeSublead': {'xlabel': 'sublead selected weighted time [ns]',	 'nbins': 50,  'xmin': -5,   'xmax': 5},
+	'weightedTimeSubleadIso': {'xlabel': 'sublead iso weighted time [ns]',	 'nbins': 50,  'xmin': -5,   'xmax': 5},
 	'timeSig': {'xlabel': 'selected S_t',	 'nbins': 50,  'xmin': -5,	'xmax': 5},
-	'timeSigIso': {'xlabel': 'signal S_t',	 'nbins': 50,  'xmin': -5,	'xmax': 5},
+	'timeSigIso': {'xlabel': 'iso S_t',	 'nbins': 50,  'xmin': -5,	'xmax': 5},
 	'timeSigLead': { 'xlabel': 'lead selected S_t',	   'nbins': 50,  'xmin': -5,	'xmax': 5},
-	'timeSigLeadIso': { 'xlabel': 'lead signal S_t',	   'nbins': 50,  'xmin': -5,	'xmax': 5},
+	'timeSigLeadIso': { 'xlabel': 'lead iso S_t',	   'nbins': 50,  'xmin': -5,	'xmax': 5},
 	'timeSigSublead': {'xlabel': 'sublead selected S_t', 	   'nbins': 50,  'xmin': -5,	'xmax': 5},
-	'timeSigSubleadIso': {'xlabel': 'sublead signal S_t',	   'nbins': 50,  'xmin': -5,	'xmax': 5},
+	'timeSigSubleadIso': {'xlabel': 'sublead iso S_t',	   'nbins': 50,  'xmin': -5,	'xmax': 5},
+	'beamHaloCNNScore': {'xlabel': 'beam halo score',	   'nbins': 50,  'xmin': -0.01,	'xmax': 1.01},
+	'isoANNScore': {'xlabel': 'iso score',	   'nbins': 50,  'xmin': -0.01,	'xmax': 1.01},
+	'WTimeSig': {'xlabel': 'S_t',	 'nbins': 50,  'xmin': -5,	'xmax': 5},
+	'WTime': {'xlabel': 'weighted time [ns]',	 'nbins': 50,  'xmin': -5,   'xmax': 5},
+	'PhoEta': {'xlabel': 'Photon Pseudorapidity #eta',	 'nbins': 50,  'xmin': -3,	'xmax': 3},
+	'PhoPt': {'xlabel': 'Photon p_T [GeV]',	 'nbins': 50,  'xmin': 0,	'xmax': 500},
 	
 }
-def draw_cms_labels():
+def draw_cms_labels(ismc = True):
     """Draw standard CMS labels on plots"""
     cms_label = TLatex()
     cms_label.SetNDC()
@@ -44,7 +51,10 @@ def draw_cms_labels():
     cms_label.DrawLatex(0.122, 0.945, "CMS")
     cms_label.SetTextFont(52)
     cms_label.SetTextSize(0.05)
-    cms_label.DrawLatex(0.23, 0.945, "Simulation Preliminary")
+    label = "Preliminary"
+    if ismc:
+        label = "Simulation "+label
+    cms_label.DrawLatex(0.23, 0.945, label)
     return cms_label
 
 
@@ -65,21 +75,44 @@ def parse_signal_name(stem):
     else:
         return stem
 
-def create_comparison_canvas(dist_key, h_full, h_fast, signal_label, logy=False, labels = ["FullSim", "FastSim"]):
+
+def parse_data_name(file):
+	#get version number
+	ver_match = re.search(r'_v(-?\d+)_',file)
+	if(ver_match):
+		ver = ver_match.group(0)
+	else:
+		print("Version not found in file",file)
+		return file	
+	name = file[file.find(ver)+len(ver):file.rfind("_rjrskim")]
+	pd, tier, run = name.split("_")
+	run = run.split("-")[0]
+	return f"_{pd}_{run}"
+
+def create_comparison_canvas(hist_name, h_full, h_fast, signal_label, logy=False, labels = ["FullSim", "FastSim"]):
 	"""Create a single comparison canvas for one distribution.
 
 	Both histograms are normalized to unit area.
 	Returns (canvas, list_of_objects_to_keep_alive).
 	"""
-	key = dist_key
+	dist_key = ""
+	for key in dist.keys():
+		if key in hist_name:
+			dist_key = key
+			break	
 	xlabel = dist[dist_key]['xlabel']
 	nbins =  dist[dist_key]['nbins']
 	xmin =   dist[dist_key]['xmin']
 	xmax =   dist[dist_key]['xmax']
 	ylabel = 'Fraction of entries'
+	if "Lead" in hist_name:
+		xlabel = "Lead "+xlabel
+	if "Sublead" in hist_name:
+		xlabel = "Sublead "+xlabel
+	if "baseline" in hist_name:
+		xlabel = "Baseline "+xlabel
 
-
-	canvas_name = f'c_{key}{signal_label[:-1]}'
+	canvas_name = f'c_{hist_name}{signal_label}'
 	canvas = CMS.cmsCanvas(canvas_name, xmin, xmax, 0, 1., xlabel, ylabel,
 						   square=False, extraSpace=0.01, iPos=0)
 	canvas.SetCanvasSize(800, 600)
@@ -150,10 +183,18 @@ def create_comparison_canvas(dist_key, h_full, h_fast, signal_label, logy=False,
 	legend.Draw()
 
 	# CMS labels
-	cms_label = draw_cms_labels()
+	ismc = True
+	if "Run" in signal_label:
+		ismc = False
+	cms_label = draw_cms_labels(ismc)
 
 	# Signal sample label
-	signal_label = parse_signal_name(signal_label)
+	sig_labs = ["mGl","mN2","mN1","ct"]
+	if all(sub in signal_label for sub in sig_labs):
+		signal_label = parse_signal_name(signal_label)
+	else: #data
+		signal_label = signal_label.replace("_"," ")
+		signal_label += ", MET < 150"
 	signal_latex = TLatex()
 	signal_latex.SetNDC()
 	signal_latex.SetTextSize(0.032)
@@ -167,7 +208,7 @@ def create_comparison_canvas(dist_key, h_full, h_fast, signal_label, logy=False,
 	entries_latex.SetTextFont(42)
 	n_full = int(h_full.GetEntries())
 	n_fast = int(h_fast.GetEntries())
-	entries_latex.DrawLatex(0.14, 0.84, f"{labels[0]} entries: {n_full}, {labels[1]} entries: {n_fast}")
+	entries_latex.DrawLatex(0.14, 0.83, f"{labels[0]} entries: {n_full}, {labels[1]} entries: {n_fast}")
 
 	objects = [h_full, h_fast, legend, cms_label, signal_latex, entries_latex]
 	return canvas, objects
