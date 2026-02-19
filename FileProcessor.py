@@ -40,8 +40,9 @@ class FileProcessor():
         ]
         
         
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v47_mini_testIsoPresel/"
         self._procFiles["SMS_test_prompt"] = [
-            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1300_mN1-1000_ct0p1_rjrskim.root"
+            path+"SMS_SVIPM100_v31_gogoGZ_AODSIM_mGl-2300_mN2-1600_mN1-1000_ct0p1_rjrskim.root"
         ]
         
         self._procFiles["SMS_test_delayed"] = [
