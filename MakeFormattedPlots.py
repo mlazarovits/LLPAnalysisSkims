@@ -1,6 +1,6 @@
 import argparse
 from PlotFormatter import PlotFormatter, PlotFormatHelper
-from ROOT import TFile
+from ROOT import TFile, kBlack
 
 histtype_dict = {
     "Ms" : "stack", #data/mc comparisons
@@ -54,7 +54,7 @@ def make_datamc_plot(ofile, helper, obs, data, mc, region, channel):
 
 #for file processing, etc
 if __name__ == "__main__":
-    obs = ["MsRs","Ms","Rs","yields","RISRPtISR","timesig"]
+    obs = ["MsRs","Ms","Rs","yields","RISRPtISR","timesig","photonPt"]
     argobs = obs + ["all"]
     parser = argparse.ArgumentParser(description="format RJR plots")
     parser.add_argument("--inputFile","-i",help="file with histograms for formatting",required=True)
@@ -266,6 +266,28 @@ if __name__ == "__main__":
         color = 1179
         canvas = formatter.format_1d_hist(canvas_name, sample_label, timesig_hist, "S_{t}", color=color, style=1, xmin=xmin, xmax=xmax, normalize = True, logy=True) 
         #canvas.SaveAs(canvas_name+plot_format)
+        ofile.cd()
+        canvas.Write()
+   
+    mc_procs = ["TotalBkg","SMSgogoGmGl1500mN2500mN1100ct0p1","SMSgogoGmGl2000mN21900mN11ct0p1","SMSgogoGmGl2000mN21950mN11900ct0p1"]
+    channel = "ge1pho"
+    region = "ge1pho"
+    colors = [kBlack, 1179, 1180, 1184]
+    styles = [20, 21, 22, 23] 
+    if "photonPt" in args.obs:
+        #make 1D Rs plots, with processes overlaid
+        hists = []
+        for proc in mc_procs:
+            hists += helper.GetHists(process=proc, obs="photonPt", channel=channel, region=region,histtype="stack")
+        if len(hists) > 1:
+            canvas_name = "can_photonPt_mcOnly_"+channel+"_"+region
+            hist_labels = [hist.GetName() for hist in hists]
+            hist_labels, group_label = helper.MakeLegendLabels(hist_labels)
+            canvas = formatter.format_hists_1d(canvas_name, hists, colors, styles, "p_{T} [GeV]","photonPt", normalize = True, logy=True, mc = True, fillstyle = 0) 
+            canvas.SaveAs(canvas_name+plot_format)
+        else:
+            print("No SMS hists for observable photonPt. Not writing stack histogram.")
+            
         ofile.cd()
         canvas.Write()
 

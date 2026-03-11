@@ -374,12 +374,12 @@ class PlotFormatter():
         procname = procname[:procname.find("_")]
         return procname       
     
-    def format_hist_1d_base(self, hist, color, style, normalize = False):
+    def format_hist_1d_base(self, hist, color, style, normalize = False, fillstyle = 3003):
         hist.SetLineColor(color)
         hist.SetLineStyle(style)
         hist.SetLineWidth(2)
         hist.SetFillColor(color)
-        hist.SetFillStyle(3003)
+        hist.SetFillStyle(fillstyle)
         hist.SetStats(0)
         if normalize and hist.Integral() > 0:
             hist.Scale(1.0 / hist.Integral())
@@ -405,27 +405,51 @@ class PlotFormatter():
         self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.88)
         return can
 
-    def format_hists_1d(self, hists, colors, styles, normalize = False, logy = False):
+    def format_hists_1d(self, name, hists, colors, styles, x_label, var_label, normalize = False, logy = False, mc = False, globallabel = "", fillstyle = -1):
         for hist, color, style in zip(hists, colors, styles):
-            format_hist_1d_base(hist, color, style, normalize)
+            if fillstyle == -1:
+                fillstyle = 3003
+            self.format_hist_1d_base(hist, color, style, normalize, fillstyle=fillstyle)
+        #get xmin, xmax values
+        xmin = hists[0].GetXaxis().GetXmin()
+        xmax = hists[0].GetXaxis().GetXmax()
         #do canvas
-        can = plotter._initialize_canvas(name, xmin, xmax, var_label)	
+        can = self._plotter1d._initialize_canvas(name, xmin, xmax, x_label)	
         if logy:
             can.SetLogy()
 
+        
+        legend_entries = []
+        for idx, hist in enumerate(hists):
+            sample_label = hist.GetName()
+            sample_label = sample_label[sample_label.find(var_label+"_")+len(var_label)+1:]
+            sample_label = sample_label[:sample_label.find("_")] 
+            if "SMS" in hist.GetName():
+                sample_label = get_signal_label(sample_label)
+            legend_entries.append({'object': hist, 'label': sample_label, 'option': 'l'})
         #setup hist axes
-        x_label = var_label 
+        # Sort MC histograms by yield (ascending order)
+        hists.sort(key=lambda x: x.GetMaximum(), reverse=True)
         self._plotter1d.setup_axes(hists[0], x_label, normalized=normalize)
-        hist[0].Draw("HIST")
+        hists[0].Draw("HIST")
         for hist in hists[1:]:
             hist.Draw("HIST SAME")
+        legend = self.create_legend(legend_entries, 0.345, 0.709, 0.853, 0.909, fill = True, textsize = 0.03)
+        legend.Draw("same")
 
         #add histograms after dereferencing
-        self._styler.draw_cms_labels(prelim_str="Preliminary")#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
-        self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.88)
+        if mc:
+            self._styler.SetLumi(0)
+            self._styler.draw_cms_labels(prelim_str="Preliminary Simulation")#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
+            self._styler.SetLumi(self._lumi)
+        else:
+            self._styler.draw_cms_labels(prelim_str="Preliminary")#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
+        #self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.88)
         if globallabel != "":
             final_state_label = self._helper.transform_to_final_state(globallabel)
             self._plotter1D._draw_region_label(can, final_state_label, x_pos=0.45, y_pos=0.93, textsize=0.05, plot_type="datamc")
+        can.legend = legend
+        can.hists = hists
         return can
     
     def add_histogram_to_canvas(self, canvas: ROOT.TCanvas, hist: ROOT.TH1D, 
@@ -453,7 +477,7 @@ class PlotFormatter():
         canvas.Update()
 
     def create_legend(self, entries: List[Dict], x1: float = 0.77, y1: float = 0.8,
-                      x2: float = 1., y2: float = 0.88) -> ROOT.TLegend:
+                      x2: float = 1., y2: float = 0.88, fill = False, textsize = None) -> ROOT.TLegend:
         """
         Create a legend for multiple histograms.
         
@@ -466,10 +490,17 @@ class PlotFormatter():
         """
         legend = ROOT.TLegend(x1, y1, x2, y2)
         legend.SetBorderSize(0)
-        legend.SetFillStyle(0)
+        if fill:
+            legend.SetFillStyle(1001)
+            legend.SetFillColor(0)
+        else:
+            legend.SetFillStyle(0)
         legend.SetMargin(0.2)  
         legend.SetEntrySeparation(0.1)
         
+        if textsize is not None:
+            legend.SetTextSize(textsize)       
+ 
         # Use two columns if more than 3 entries
         #if len(entries) > 3:
         #legend.SetNColumns(2)
