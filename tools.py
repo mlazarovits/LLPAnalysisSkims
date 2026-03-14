@@ -35,7 +35,7 @@ class EfficiencyParser:
 	            f.write("\\hline\n")
 	            for label, entries, eff in data:
 	                if ">" in label or "<" in label:
-	                    label = add_dollar_to_inequalities(label)
+	                    label = self.add_dollar_to_inequalities(label)
 	                f.write(f"{label} & {int(entries)} & {eff:.3f} \\\\\n")
 	            f.write("\\hline\n")
 	            f.write("\\end{tabular}\n")
