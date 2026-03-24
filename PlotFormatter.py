@@ -37,27 +37,23 @@ class PlotFormatHelper:
         self._all_hists = None
         self.IndexHists()
         self._labels_dict = {
-            "ge2pho" : "#geq 2 #gamma",
+            "2pho" : "2 #gamma",
             "1pho" : "1 #gamma",
             "1pho1HadSV" : "1 #gamma + 1 SV_{hh}",
-            "nonIsoEECR_long" : "Prompt EE nonIso CR",
-            "loosenonIsoEECR_long" : "Prompt EE loose nonIso CR",
-            "looseNotTightnonIsoEECR_long" : "Prompt EE loose!tight nonIso CR",
-            "tightnonIsoEECR_long" : "Prompt EE tight nonIso CR",
-            "verynonIsoEECR_long" : "Prompt EE tight NonIso CR",
+            "looseNotTightIsoCR_long" : "Loose-not-tight Iso CR",
+            "tightIsoSR_long" : "Tight Iso SR",
             "BHCR_long" : "Beam Halo CR",
             "earlyBHCR_long" : "Early Beam Halo CR",
             "lateBHCR_long" : "Late Beam Halo CR",
-            "isoEESR_long" : "Prompt Iso SR",
+            "isoSR_long" : "Prompt Iso SR",
             "earlyPBCR_long" : "Early !Beam Halo CR",
             "latePBCR_long" : "Late !Beam Halo SR",
-            "nonIsoEECR" : "_{t0}^{CR,nonIso}",
-            "loosenonIsoEECR" : "_{t0}^{CR,LnonIso}",
-            "looseNotTightnonIsoEECR" : "_{t0}^{CR,L!TnonIso}",
-            "tightnonIsoEECR" : "_{t0}^{CR,TnonIso}",
-            "verynonIsoEECR" : "_{t0}^{CR,TnonIso}",
-            "earlyBHCR" : "_{t-}^{CR, BH}",
-            "lateBHCR" : "_{t+}^{CR, BH}"
+            "looseNotTightIsoCR" : "#gamma_{t0}^{CR, L!T iso}",
+            "tightIsoSR" : "#gamma_{t0}^{CR, tight iso}",
+            "earlyBHCR" : "#gamma_{t-}^{CR, BH}",
+            "lateBHCR" : "#gamma_{t+}^{CR, BH}",
+            "earlyPBCR" : "#gamma_{t-}^{CR, !BH}",
+            "latePBCR" : "#gamma_{t+}^{SR, !BH}",
         }
         self._sample_label_mapping = {
             'QCD': 'QCD multijets',
@@ -71,7 +67,7 @@ class PlotFormatHelper:
             'SingleTop': 'Single top',
             'ST': 'Single top',
             'DiPJBox' : 'Di-photon + jets', #may need to combine with GJets
-            "METPD" : "MET PD Run II",
+           "METPD" : "MET PD Run II",
             "METFullRunII" : "MET PD Run II",
             "MET18" : "MET PD 2018",
             "MET17" : "MET PD 2017",
