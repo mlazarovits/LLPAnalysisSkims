@@ -38,6 +38,14 @@ class FileProcessor():
             path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2350_ct0p1_rjrskim.root",
             path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2400_ct0p1_rjrskim.root",
         ]
+        self._procFiles["GJets"] = [
+            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-40To100_RunIISummer20UL18_rjrskim.root",
+            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-100To200_RunIISummer20UL18_rjrskim.root",
+            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-200To400_RunIISummer20UL18_rjrskim.root",
+            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-400To600_RunIISummer20UL18_rjrskim.root",
+            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-600ToInf_RunIISummer20UL18_rjrskim.root",
+        ]
+
         
         
         path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v47_mini_testIsoPresel/"
