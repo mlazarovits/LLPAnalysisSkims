@@ -89,6 +89,95 @@ def parse_data_name(file):
 	run = run.split("-")[0]
 	return f"_{pd}_{run}"
 
+def create_comparison_canvas_2d(hist_name, hist, signal_label, globallabel):
+	"""Create a single comparison canvas for one distribution.
+
+	Both histograms are normalized to unit area.
+	Returns (canvas, list_of_objects_to_keep_alive).
+	"""
+	dist_key = ""
+	dist_keys = hist_name.split("_")
+	dist_keyx = dist_keys[0]
+	dist_keyy = dist_keys[1]
+	for key in dist.keys():
+		if key in dist_keyx:
+			dist_keyx = key
+			break
+	for key in dist.keys():
+		if key in dist_keyy:
+			dist_keyy = key
+			break
+	xlabel = dist[dist_keyx]['xlabel']
+	xmin =   dist[dist_keyx]['xmin']
+	xmax =   dist[dist_keyx]['xmax']
+	ylabel = dist[dist_keyy]['xlabel']
+	ymin =   dist[dist_keyy]['xmin']
+	ymax =   dist[dist_keyy]['xmax']
+	if "Lead" in hist_name:
+		xlabel = "Lead "+xlabel
+	if "Sublead" in hist_name:
+		xlabel = "Sublead "+xlabel
+	if "baseline" in hist_name:
+		xlabel = "Baseline "+xlabel
+
+	canvas_name = f'c_{hist_name}_{globallabel}'
+	canvas = CMS.cmsCanvas(canvas_name, xmin, xmax, ymin, ymax, xlabel, ylabel,
+						   square=False, extraSpace=0.01, iPos=0)
+	canvas.SetCanvasSize(800, 600)
+	canvas.SetLeftMargin(0.12)
+	canvas.SetRightMargin(0.05)
+	canvas.SetGrid()
+
+	# Normalize to unit area
+	if hist.Integral() > 0:
+		hist.Scale(1.0 / hist.Integral())
+
+	# Styling
+	hist.SetTitle("")
+	hist.GetXaxis().SetTitle(xlabel)
+	hist.GetYaxis().SetTitle(ylabel)
+	hist.SetStats(0)
+	hist.GetXaxis().SetTitleSize(0.05)
+	hist.GetXaxis().SetLabelSize(0.05)
+	hist.GetXaxis().SetTitleOffset(1.25)
+	hist.GetXaxis().CenterTitle(True)
+	hist.GetYaxis().SetTitleSize(0.05)
+	hist.GetYaxis().SetLabelSize(0.05)
+	hist.GetYaxis().SetTitleOffset(1.25)
+	hist.GetYaxis().CenterTitle(True)
+
+	hhist = hist.DrawCopy("colz")
+
+	# CMS labels
+	ismc = True
+	if "Run" in hist_name:
+		ismc = False
+	cms_label = draw_cms_labels(ismc)
+
+	# Signal sample label
+	sig_labs = ["mGl","mN2","mN1","ct"]
+	if all(sub in signal_label for sub in sig_labs):
+		signal_label = parse_signal_name(signal_label)
+	else: #data
+		signal_label = signal_label.replace("_"," ")
+		signal_label += ", MET < 150"
+	signal_latex = TLatex()
+	signal_latex.SetNDC()
+	signal_latex.SetTextSize(0.032)
+	signal_latex.SetTextFont(42)
+	signal_latex.DrawLatex(0.14, 0.88, signal_label)
+
+	# Entries label
+	entries_latex = TLatex()
+	entries_latex.SetNDC()
+	entries_latex.SetTextSize(0.028)
+	entries_latex.SetTextFont(42)
+	n_full = int(hist.GetEntries())
+	entries_latex.DrawLatex(0.14, 0.83, f"{globallabel} entries: {n_full}")
+
+	objects = [hist, cms_label, signal_latex, entries_latex]
+	return canvas, objects
+
 def create_comparison_canvas(hist_name, h_full, h_fast, signal_label, logy=False, labels = ["FullSim", "FastSim"]):
 	"""Create a single comparison canvas for one distribution.
 
