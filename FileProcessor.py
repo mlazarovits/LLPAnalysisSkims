@@ -44,6 +44,9 @@ class FileProcessor():
             path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-200To400_RunIISummer20UL18_rjrskim.root",
             path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-400To600_RunIISummer20UL18_rjrskim.root",
             path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-600ToInf_RunIISummer20UL18_rjrskim.root",
+            #path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_M40_80-sherpa_rjrskim.root",
+            #path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-0to40_rjrskim.root",
+            #path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
         ]
 
         
@@ -152,21 +155,6 @@ class FileProcessor():
             path+"QCD_R18_SVIPM100_v31_QCD_HT700to1000_rjrskim.root",
         ]
         
-        self._procFiles["GJets"] = [
-            path+"GJets_R18_SVIPM100_v31_GJets_HT-40To100_rjrskim.root",
-            path+"GJets_R18_SVIPM100_v31_GJets_HT-100To200_rjrskim.root",
-            path+"GJets_R18_SVIPM100_v31_GJets_HT-200To400_rjrskim.root",
-            path+"GJets_R18_SVIPM100_v31_GJets_HT-400To600_rjrskim.root",
-            path+"GJets_R18_SVIPM100_v31_GJets_HT-600ToInf_rjrskim.root",
-            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_M40_80-sherpa_rjrskim.root",
-            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-0to40_rjrskim.root",
-            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
-        ]
-
-        self._procFiles["GJets_test"] = [
-            path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
-        ]
-
         self._procFiles["TotalBkg"] = self._procFiles["GJets"] + self._procFiles["QCD"] + self._procFiles["TTXJets"] + self._procFiles["WJets"] + self._procFiles["ZJets"]
 
 
