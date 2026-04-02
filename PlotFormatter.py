@@ -67,7 +67,7 @@ class PlotFormatHelper:
             'SingleTop': 'Single top',
             'ST': 'Single top',
             'DiPJBox' : 'Di-photon + jets', #may need to combine with GJets
-           "METPD" : "MET PD Run II",
+            "METPD" : "MET PD Run II",
             "METFullRunII" : "MET PD Run II",
             "MET18" : "MET PD 2018",
             "MET17" : "MET PD 2017",
@@ -329,18 +329,23 @@ class PlotFormatHelper:
         return final_labels, group_label
 
 class PlotFormatter():
-    def __init__(self, helper, lumi = 138, plot_format = ".png"):
-        self._styler = StyleManager(lumi) 
+    def __init__(self, helper, lumi = 138, com = 13, plot_format = ".png"):
+        self._styler = StyleManager(lumi, com) 
         self._plotter1d = Plotter1D(self._styler)
         self._plotter2D = Plotter2D(self._styler)
         self._plotterDataMC = PlotterDataMC(self._styler)
         self._plotterDataMC._ensure_mc_colors()
         self._plot_format = plot_format
         self._lumi = lumi
+        self._com = com
         self._helper = helper
      
     def SetLumi(self, lumi):
         self._styler.SetLumi(lumi) 
+
+    
+    def SetEnergy(self, com):
+        self._styler.SetEnergy(com)
 
     def format_2d_hist(self, name, hist, sample_label, x_label, x_min, x_max, y_label, y_min, y_max, normalize = False, globallabel = "", sample_label_x_pos = 0.65):
         canvas = CMS.cmsCanvas(name, x_min, x_max, y_min, y_max, x_label, y_label, 
@@ -357,7 +362,8 @@ class PlotFormatter():
                 sample_label_x_pos = 0.32
                 prelim_str = "Preliminary Simulation"
             else:
-                sample_label = self._helper._sample_label_mapping[sample_label]
+                if sample_label in self._helper._sample_label_mapping.keys():
+                    sample_label = self._helper._sample_label_mapping[sample_label]
                 prelim_str = "Preliminary"
         if globallabel != "":
             final_state_label = self._helper.transform_to_final_state(globallabel)
@@ -577,7 +583,7 @@ class PlotFormatter():
         lumi_latex.SetNDC()
         lumi_latex.SetTextSize(text_size)
         lumi_latex.SetTextAlign(31)  # Right align
-        lumi_latex.DrawLatex(lumi_location, y_location, f"{self._lumi:.0f} fb^{{-1}} (13 TeV)")
+        lumi_latex.DrawLatex(lumi_location, y_location, f"{self._lumi:.0f} fb^{{-1}} ({self._com}:.1f TeV)")
         
         return cms_objects + [lumi_latex]
 
