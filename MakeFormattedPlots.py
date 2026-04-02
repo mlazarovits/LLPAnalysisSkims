@@ -59,19 +59,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="format RJR plots")
     parser.add_argument("--inputFile","-i",help="file with histograms for formatting",required=True)
     parser.add_argument("--ofileName","-o",help="name for output file")
-    parser.add_argument("--format","-f",help="what to save plots as",default="png")
+    #parser.add_argument("--format","-f",help="what to save plots as",default="png")
     parser.add_argument("--obs",nargs='+',help='which obs/plots to make',choices=argobs)
+    parser.add_argument("--regions",nargs="+",help='which regions to look at')
+    parser.add_argument("--channels",nargs="+",help='which channels to look at')
     args = parser.parse_args()   
-    plot_format = "."+args.format
+    #plot_format = "."+args.format
+
+    lumi = 400
+    com = 13.6
 
     if args.ofileName is not None:
         ofilename = args.ofileName
     else: 
         ofilename = args.inputFile[:args.inputFile.find(".root")]
-        ofilename += "_formatted.root"
+    ofilename += "_formatted.root"
     ofile = TFile(ofilename,"RECREATE");
     helper = PlotFormatHelper(args.inputFile)
     formatter = PlotFormatter(helper)
+    formatter.SetLumi(lumi)
+    formatter.SetEnergy(com)
 
     if 'all' in args.obs:
         args.obs = obs
@@ -81,10 +88,10 @@ if __name__ == "__main__":
     procs = args.inputFile[:args.inputFile.find("_rjrObs")] 
     procs = procs.split("_") 
  
+    regions = args.regions 
+    channels = args.channels 
     for proc in procs:
         #make 2D Ms-Rs plots - nonIsoEECR (data and MC bkg), BHCR (data)
-        channels = ["1pho", "ge2pho","1HadSV"]
-        regions = ["earlyBHCR","lateBHCR","loosenonIsoEECR","dxySigCR"]
         if 'MsRs' in args.obs:
             #iterate through and format each
             for channel in channels:
@@ -101,7 +108,7 @@ if __name__ == "__main__":
                     hist_labels = [msrs_hist.GetName()]
                     hist_labels, group_labels = helper.MakeLegendLabels(hist_labels)
                     #remove sample, goes in sample_label
-                    sample_label = group_labels[1]
+                    sample_label = group_labels[0]
                     group_labels.remove(sample_label)
                     group_label = ", ".join(group_labels)
                     print("group_label",group_label,"sample_label",sample_label)
@@ -110,13 +117,12 @@ if __name__ == "__main__":
                     canvas_name = "can_msrs_2d_"+proc+"_"+channel+"_"+region
                     ms_max = 3.
                     rs_max = 1.
-                    if "SMS" in proc:
-                        normalize = True
-                        helper.NormalizeHist(hist_tev)
-                        formatter.SetLumi(0)
-                    else:
-                        normalize = False
-                        formatter.SetLumi(138)
+                    #if "SMS" in proc:
+                    #    normalize = True
+                    #    helper.NormalizeHist(hist_tev)
+                    #    formatter.SetLumi(0)
+                    #else:
+                    normalize = False
                     canvas = formatter.format_2d_hist(canvas_name, hist_tev, sample_label, "M_{S} [TeV]", 0., ms_max, "R_{S}", 0., rs_max, normalize=normalize,globallabel = group_label,sample_label_x_pos=0.6)
                     #canvas.SaveAs(canvas_name+plot_format)
                     ofile.cd()
@@ -137,17 +143,17 @@ if __name__ == "__main__":
                     hist_labels = [rsptisr_hist.GetName()]
                     hist_labels, group_labels = helper.MakeLegendLabels(hist_labels)
                     #remove sample, goes in sample_label
-                    sample_label = group_labels[1]
+                    sample_label = group_labels[0]
                     group_labels.remove(sample_label)
                     group_label = ", ".join(group_labels)
                     print("group_label",group_label,"sample_label",sample_label)
                     canvas_name = "can_rsptisr_2d_"+proc+"_"+channel+"_"+region
-                    if "SMS" in proc:
-                        normalize = True
-                        helper.NormalizeHist(rsptisr_hist)
-                    else:
-                        normalize = False
-                    canvas = formatter.format_2d_hist(canvas_name, rsptisr_hist, sample_label, "R_{ISR}", 50., 1500, "p^{ISR}_{T} [GeV]", 0., 1., normalize=normalize,globallabel = group_label,sample_label_x_pos=0.6)
+                    #if "SMS" in proc:
+                    #    normalize = True
+                    #    helper.NormalizeHist(rsptisr_hist)
+                    #else:
+                    normalize = False
+                    canvas = formatter.format_2d_hist(canvas_name, rsptisr_hist, sample_label, "p^{ISR}_{T} [GeV]", 50., 1500, "R_{ISR}", 0., 1., normalize=normalize,globallabel = group_label,sample_label_x_pos=0.6)
                     #canvas.SaveAs(canvas_name+plot_format)
                     ofile.cd()
                     canvas.Write()
