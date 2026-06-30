@@ -105,30 +105,19 @@ class RJRAnalysis:
         self._kin_bins["MsCR"] = {"ms" : array("d", [0, self._kin_bins["BHCR"]['ms'][0]]), "rs": array("d", [0.15, 1.0])}
         self._kin_bins["RsCR"] = {"ms" : array("d", [0, 10000]), "rs": array("d", [self._kin_bins["BHCR"]['rs'][0], 1.0])}
         self._kin_bins["dxySigCR"] = {"ms" : array("d", [1000, 10000]), "rs": array("d", [0.15, 1.0])}
-        self._yaml_path = 'BigGuy_NonCompressed_FullRegions_AnalysisConfig_PhotonFlags.yaml'#'BigGuy_NonCompressed_FullRegions_AnalysisConfig_PromptBHDelayedContributions.yaml'
+        self._yaml_path = ''
 
 
         self._dfkinbins = {}
-        self._regmap = {
-                1 : "Ch1CRGeLep1",
-                2 : "Ch2SRGeLep1",
-                3 : "Ch3CRGeHad1",
-                4 : "Ch4SRGeHad1",
-                5 : "Ch5CRgeq1PhoBHEarly",
-                6 : "Ch6CRgeq1PhoBHLate",
-                7 : "Ch7CRgeq1PhoNotBHEarly",
-                8 : "Ch8SRgeq1PhoNotBHLateTightIso",
-                9 : "Ch9CReq1PhoMedIsoPrompt",
-                10 : "Ch10SReq1PhoTightIsoPrompt",
-                11 : "Ch11CReq2PhoMedIsoPrompt",
-                12 : "Ch12SReq2PhoTightIsoPrompt",
-                13 : "Ch13CRgeq1SVgeq1PhoNotBHLate",
-                14 : "Ch14SRgeq1SVgeq1PhoNotBHLate",
-                15 : "Ch15CRgeq1PhoMedIsoEarly",
-                16 : "Ch16CRgeq1PhoMedIsoLate",
-                17 : "Ch17CRgeq1PhoTightIsoEarly"
-        }
-
+        gInterpreter.Declare(
+            """
+                float LifetimeReweight(float ctau, float tau_old, float tau_new){
+                    double inv_old = 1.0 / tau_old;
+                    double inv_new = 1.0 / tau_new;
+                    return float( (tau_old / tau_new) * std::exp(ctau * (inv_old - inv_new)) );
+                }
+            """
+        )
 
         gInterpreter.Declare(
             """
@@ -143,7 +132,8 @@ class RJRAnalysis:
             int getRegionIdxValidation(const int nSVHad, const RVecF& SVHadDxySig, const RVecF& SVHadMass, const int nSVLep, const RVecF& SVLepDxySig, const int nPhotons, const RVecF& timesigs, const RVecF& bh_scores, const RVecF& iso_scores, const RVecF& photon_eta, const RVecF& photon_pt, const RVecI& nRJRJetsA, const RVecI& nRJRJetsB){
                 double st_bhearly = -3;
                 double st_isoearly = -2.5;
-                
+                double noniso_cutoff = 0.9; //>= is iso, < is noniso
+
                 if(nSVLep > 0){
                     if(SVLepDxySig[0] < 50)
                         return 1;
@@ -157,9 +147,10 @@ class RJRAnalysis:
                 else{ //nSVLep == 0
                     if(nSVHad > 0){
                         if(nPhotons > 0){
-                            auto mask = bh_scores < 0.98;
-                            auto lead_idx = Nonzero(mask)[0];
-                            auto lead_timesig = timesigs[lead_idx];
+                            auto mask = bh_scores < 0.185;
+                            auto notbh_timesigs = timesigs[mask];
+                            
+                            auto lead_timesig = notbh_timesigs[notbh_timesigs >= 2.5][0];
                             if(lead_timesig >= 2.5){ //mixed regions - had SV + late signal photon
                                 if(SVHadMass[0] > 15){
                                     if(SVHadDxySig[0] < 200)
@@ -211,31 +202,32 @@ class RJRAnalysis:
                         if(nPhotons < 1)
                             return -8;
                         if(Any(timesigs < -2.5 || timesigs >= 2.5)){ //nonprompt
-                            if(Any((bh_scores >= 0.98 && (bh_scores < 0.999)))){ //bh regions
-                                auto mask = ((bh_scores >= 0.98) && (bh_scores < 0.999));
+                            if(Any(bh_scores >= 0.95 && (bh_scores < 0.99))){ //bh regions
+                                auto mask = ((bh_scores >= 0.95) && (bh_scores < 0.99));
                                 auto bh_timesigs = timesigs[mask];
                                 
-                                auto lead_timesig = bh_timesigs[bh_timesigs < -3 || bh_timesigs >= 2.5][0];
-                                if(lead_timesig < st_bhearly) //early bh cr
+                                auto lead_timesig = bh_timesigs[bh_timesigs < st_bhearly || bh_timesigs >= 2.5][0];
+                                    //cout << "bh scores " << endl;
+                                    //for(auto b : bh_scores) cout << b << endl;
+                                    //cout << "timesigs " << endl;
+                                    //for(auto t : timesigs) cout << t << endl;
+                                    //cout << "bh timesigs " << endl;
+                                    //for(auto t : bh_timesigs) cout << t << endl;
+                                    //cout << "lead_timesig " << lead_timesig << endl; cout << endl; 
+                                if(lead_timesig < st_bhearly){ //early bh cr
                                     return 5;
+                                }
                                 else if(lead_timesig >= 2.5) //late bh cr
                                     return 6;
                                 else
                                     return -9;
                             }
                             else{ //no bh regions
-                                if(Any(bh_scores < 0.98 && bh_scores >= 0.917252)){ //!bh regions
-                                    auto mask = ((bh_scores < 0.98) && (bh_scores >= 0.917252));
+                                if(Any(bh_scores < 0.95 && bh_scores >= 0.917252)){ //!bh regions
+                                    auto mask = ((bh_scores < 0.95) && (bh_scores >= 0.917252));
                                     auto notbh_timesigs = timesigs[mask];
-
-                                    //lower cut on time sig to exclude spikes 
-                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < -3) || notbh_timesigs >= 2.5][0];
-                                    //cout << "bh scores " << endl;
-                                    //for(auto b : bh_scores) cout << b << endl;
-                                    //cout << "timesigs " << endl;
-                                    //for(auto t : timesigs) cout << t << endl;
-                                    //cout << "lead timesig " << lead_timesig << endl;
-                                    //cout << endl;
+                                    
+                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_bhearly) || notbh_timesigs >= 2.5][0];
 
                                     if(lead_timesig < st_bhearly && lead_timesig >= -10){ //early !bh cr
                                         return 7;
@@ -245,10 +237,10 @@ class RJRAnalysis:
                                     }
                                     else{ //recover these in np iso regions
                                         if(Any(iso_scores >= 0.5 && iso_scores < 0.6)){ //noniso np region
-                                            auto mask = iso_scores < 0.6 && iso_scores >= 0.5;
+                                            auto mask = ((iso_scores < 0.6) && (iso_scores >= 0.5));
                                             auto mediso_timesigs = timesigs[mask];
                                             
-                                            auto lead_timesig = mediso_timesigs[(mediso_timesigs >= -3 && mediso_timesigs < -2.5) || mediso_timesigs >= 2.5][0];
+                                            auto lead_timesig = mediso_timesigs[(mediso_timesigs >= st_bhearly && mediso_timesigs < st_isoearly) || mediso_timesigs >= 2.5][0];
                                             if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early noniso cr
                                                 return 15;
                                             else if(lead_timesig >= 2.5) //late noniso cr
@@ -257,10 +249,10 @@ class RJRAnalysis:
                                                 return -10; //TODO - move to prompt
                                         }
                                         else{ //iso np region
-                                            auto mask = ((iso_scores >= 0.6) && (iso_scores < 0.7));
+                                            auto mask = ((iso_scores >= 0.6) && (iso_scores < 0.8));
                                             auto tightiso_timesigs = timesigs[mask];
                                             
-                                            auto lead_timesig = tightiso_timesigs[(tightiso_timesigs >= -3 && tightiso_timesigs < -2.5) || tightiso_timesigs >= 2.5][0];
+                                            auto lead_timesig = tightiso_timesigs[(tightiso_timesigs >= st_bhearly && tightiso_timesigs < st_isoearly) || tightiso_timesigs >= 2.5][0];
                                             if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early iso cr
                                                 return 17;
                                             else if(lead_timesig >= 2.5) //late !bhiso sr
@@ -270,12 +262,12 @@ class RJRAnalysis:
                                         }
                                     }
                                 }
-                                else{ //np iso regions, noniso_cutoff in full regions is 0.9
+                                else{ //np iso regions
                                     if(Any(iso_scores < 0.6 && iso_scores >= 0.5)){ //noniso np region
                                         auto mask = iso_scores < 0.6 && iso_scores >= 0.5;
-                                        auto mediso_timesigs = timesigs[mask];
+                                        auto lead_idx = Nonzero(mask)[0];
                                         
-                                        auto lead_timesig = mediso_timesigs[(mediso_timesigs >= -3 && mediso_timesigs < -2.5) || mediso_timesigs >= 2.5][0];
+                                        auto lead_timesig = timesigs[lead_idx];
                                         if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early noniso cr
                                             return 15;
                                         else if(lead_timesig >= 2.5) //late noniso cr
@@ -284,9 +276,10 @@ class RJRAnalysis:
                                             return -12;
                                     }
                                     else{ //iso np region
-                                        auto mask = ((iso_scores >= 0.6) && (iso_scores < 0.7));
-                                        auto tightiso_timesigs = timesigs[mask];
-                                        auto lead_timesig = tightiso_timesigs[(tightiso_timesigs >= -3 && tightiso_timesigs < -2.5) || tightiso_timesigs >= 2.5][0];
+                                        auto mask = ((iso_scores >= 0.6) && (iso_scores < 0.8));
+                                        auto iso_timesigs = timesigs[mask];
+                                        //CAUTION - if no elements of masked vector satisfy giving masking condition, the mask will return exactly 0 
+                                        auto lead_timesig = iso_timesigs[(iso_timesigs < st_isoearly && iso_timesigs >= st_bhearly) || iso_timesigs >= 2.5][0];
                                         if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early iso cr
                                             return 17;
                                         else if(lead_timesig >= 2.5) //late !bhiso sr
@@ -300,6 +293,8 @@ class RJRAnalysis:
                             }
                         }
                         else{ //prompt
+                            if(Any(bh_scores >= 0.95 && (bh_scores < 0.99))) //no bh photons!!
+                                return -20;
                             if(nPhotons == 1){
                                 if(!(( nRJRJetsA[0] >= 3 && nRJRJetsB[0] >= 2 ) || ( nRJRJetsA[0] >= 2 && nRJRJetsB[0] >= 3))){
                                     return -14;
@@ -308,9 +303,10 @@ class RJRAnalysis:
                                     //require barrel only
                                     if((photon_eta[0] < 1.479 && photon_eta[0] > -1.479)){
                                         if(photon_pt[0] > 100){
-                                            if( (iso_scores[0] < -0.000198*photon_pt[0] + 1.0098) && ( iso_scores[0] >= -0.000198*photon_pt[0] + 0.7698))
+                                            if((iso_scores[0] < -0.000198*photon_pt[0] + 1.0098) && ( iso_scores[0] >= -0.000198*photon_pt[0] + 0.7698)){
                                                    return 9;
-                                            else if( (iso_scores[0] < -0.000198*photon_pt[0] + 1.0188) && ( iso_scores[0] >= -0.000198*photon_pt[0] + 1.0098) )
+                                            }
+                                            else if((iso_scores[0] < -0.000198*photon_pt[0] + 1.0188) && ( iso_scores[0] >= -0.000198*photon_pt[0] + 1.0098))
                                                    return 10;
                                             else
                                                 return -15;
@@ -326,8 +322,9 @@ class RJRAnalysis:
                                         }
                                     }
                                     else{ //endcap
-                                            if((iso_scores[0] < 0.8) && (iso_scores[0] >= 0.75))
+                                            if((iso_scores[0] < 0.8) && (iso_scores[0] >= 0.75)){
                                                 return 9;
+                                            }
                                             else if((iso_scores[0] < 0.9) && (iso_scores[0] >= 0.8))
                                                 return 10;
                                             else
@@ -342,17 +339,18 @@ class RJRAnalysis:
                                 int nNoIso = 0;
                                 if((photon_eta[0] < 1.479 && photon_eta[0] > -1.479)){
                                     if(photon_pt[0] > 100){
-                                        if( ( iso_scores[0] < -0.0001*photon_pt[0] + 0.86 ) && (iso_scores[0] >= -0.0001*photon_pt[0] + 0.76 )  )
+                                        if(( iso_scores[0] < -0.0001*photon_pt[0] + 0.86 ) && (iso_scores[0] >= -0.0001*photon_pt[0] + 0.76 ))
                                             nMedIso++;
-                                        else if( (iso_scores[0] < -0.0001*photon_pt[0] + 0.96) && ( iso_scores[0] >= -0.0001*photon_pt[0] + 0.86  )  )
+                                        else if((iso_scores[0] < -0.0001*photon_pt[0] + 0.96) && ( iso_scores[0] >= -0.0001*photon_pt[0] + 0.86  ))
                                             nTightIso++;
                                         else
                                             nNoIso++;
+
                                     }
                                     else{
                                         if((iso_scores[0] < 0.85 && iso_scores[0] >= 0.75))
                                             nMedIso++;
-                                        else if( (iso_scores[0] >= 0.85) && (iso_scores[0] >= 0.95) )
+                                        else if( (iso_scores[0] >= 0.85) && (iso_scores[0] < 0.95))
                                             nTightIso++;
                                         else
                                             nNoIso++;
@@ -361,25 +359,25 @@ class RJRAnalysis:
                                 else{ //recover endcap photons
                                      if((iso_scores[0] < 0.8 && iso_scores[0] >= 0.75))
                                          nMedIso++;
-                                     else if( (iso_scores[0] < 0.99) && (iso_scores[0] >= 0.8 ))
+                                     else if((iso_scores[0] < 0.99) && (iso_scores[0] >= 0.8 ) )
                                          nTightIso++;
                                      else
                                          nNoIso++;
                                 }
                                 if(photon_eta[1] < 1.479 && photon_eta[1] > -1.479){
                                     if(photon_pt[1] > 100){
-                                        if( ( iso_scores[0] < -0.0001*photon_pt[0] + 0.86 ) && (iso_scores[0] >= -0.0001*photon_pt[0] + 0.76 )  )
+                                        if(( iso_scores[1] < -0.0001*photon_pt[1] + 0.86 ) && (iso_scores[1] >= -0.0001*photon_pt[1] + 0.76 ))
                                             nMedIso++;
-                                        else if( (iso_scores[0] < -0.0001*photon_pt[0] + 0.96) && ( iso_scores[0] >= -0.0001*photon_pt[0] + 0.86  )  )
+                                        else if((iso_scores[1] < -0.0001*photon_pt[1] + 0.96) && ( iso_scores[1] >= -0.0001*photon_pt[1] + 0.86  ))
                                             nTightIso++;
                                         else
                                             nNoIso++;
 
                                     }
                                     else{
-                                        if((iso_scores[0] < 0.85 && iso_scores[0] >= 0.75))
+                                        if((iso_scores[1] < 0.85 && iso_scores[1] >= 0.75))
                                             nMedIso++;
-                                        else if( (iso_scores[0] >= 0.85) && (iso_scores[0] >= 0.95) )
+                                        else if((iso_scores[1] >= 0.85) && (iso_scores[1] < 0.95))
                                             nTightIso++;
                                         else
                                             nNoIso++;
@@ -387,9 +385,9 @@ class RJRAnalysis:
 
                                 }
                                 else{ //recover endcap photons
-                                     if((iso_scores[0] < 0.8 && iso_scores[0] >= 0.75))
+                                     if((iso_scores[1] < 0.8 && iso_scores[1] >= 0.75))
                                          nMedIso++;
-                                     else if( (iso_scores[0] < 0.99) && (iso_scores[0] >= 0.8 ))
+                                     else if( (iso_scores[1] < 0.95) && (iso_scores[1] >= 0.8 ))
                                          nTightIso++;
                                      else
                                          nNoIso++;
@@ -701,6 +699,13 @@ class RJRAnalysis:
 
 
 
+    def set_yaml_path(self, val = False):
+        if val:
+            self._yaml_path = 'BigGuy_NonCompressed_Validation_AnalysisConfig_PromptBHDelayedContributions.yaml'
+        else:
+            self._yaml_path = 'BigGuy_NonCompressed_FullRegions_AnalysisConfig_PromptBHDelayedContributions.yaml'
+            #'BigGuy_NonCompressed_FullRegions_AnalysisConfig_PhotonFlags.yaml'
+
     def get_kin_bins(self, val = False):
         with open(self._yaml_path,'r') as f:
             data = yaml.safe_load(f)
@@ -758,7 +763,9 @@ class RJRAnalysis:
         self._dfkinbins["Ch14CRgeq1SVHighDxygeq1PhoNotBHLate"] = SVPhoDelayedbins
 
         self._dfkinbins["Ch8SRgeq1PhoNotBHLate"] = PhoDelayedbins
-        self._dfkinbins["Ch18SRgeq1PhoTightIsoLate"] = PhoDelayedbins
+        self._dfkinbins["Ch18CRGJetsLate"] = PhoDelayedbins
+        self._dfkinbins["Ch19CRRsLate"] = PhoDelayedbins
+        #self._dfkinbins["Ch18SRgeq1PhoTightIsoLate"] = PhoDelayedbins
 
     def do_kin_bins(self, region_dict):
         binned_regions = {}
@@ -776,7 +783,7 @@ class RJRAnalysis:
         return binned_regions
             
 
-    def define_regions_ifelse(self, df, ch_name, mc, val = False, unblind = False):
+    def define_regions_ifelse(self, df, mc, val = False, unblind = False):
         if val:
             df = df.Define("regionIdx",f"getRegionIdxValidation(SV_nHadronic, HadronicSV_dxySig, HadronicSV_mass, SV_nLeptonic, LeptonicSV_dxySig, nBaseLinePhotons, baseLinePhoton_WTimeSig, baseLinePhoton_beamHaloCNNScore, baseLinePhoton_isoANNScore, baseLinePhoton_Eta, baseLinePhoton_Pt, rjrNJetsJa, rjrNJetsJb)")
         else:
@@ -794,15 +801,16 @@ class RJRAnalysis:
             "Ch15CRgeq1PhoMedIsoEarly" : df.Filter("regionIdx == 15","Ch15CRgeq1PhoMedIsoEarly"),
             "Ch16CRgeq1PhoMedIsoLate" : df.Filter("regionIdx == 16","Ch16CRgeq1PhoMedIsoLate"),
             "Ch17CRgeq1PhoTightIsoEarly" : df.Filter("regionIdx == 17","Ch17CRgeq1PhoTightIsoEarly"),
+            "Ch18CRGJetsLate" : df.Filter("((nBaseLinePhotons == 1 && (baseLinePhoton_WTimeSig[0] > 2.5 && baseLinePhoton_GJetsCR[0] == 1)) || (nBaseLinePhotons == 2 && ( baseLinePhoton_WTimeSig[0] > 2.5 && baseLinePhoton_GJetsCR[0] == 1) || ( baseLinePhoton_WTimeSig[1] > 2.5 && baseLinePhoton_GJetsCR[1] == 1)) )","Ch18CRGJetsLate"),
+            "Ch19CRRsLate" : df.Filter("((rjr_Ms[0] >= 2000) && (rjr_Rs[0] < 0.15))","Ch19CRRsLate"),
         }
  
-
         if unblind or mc:
             regions["Ch2SRGeLep1"] = df.Filter("regionIdx == 2","Ch2SRGeLep1")
             regions["Ch4SRGeHad1"] = df.Filter("regionIdx == 4","Ch4SRGeHad1")
             regions["Ch8SRgeq1PhoNotBHLateTightIso"] = df.Filter("regionIdx == 8","Ch8SRgeq1PhoNotBHLateTightIso")
             #regions["Ch8SRgeq1PhoNotBHLate"] = df.Filter("regionIdx == 8","Ch8SRgeq1PhoNotBHLateTightIso")
-            regions["Ch18SRgeq1PhoTightIsoLate"] = df.Filter("regionIdx == 18","Ch18SRgeq1PhoNotBHTightIsoLate")
+            #regions["Ch18SRgeq1PhoTightIsoLate"] = df.Filter("regionIdx == 18","Ch18SRgeq1PhoNotBHTightIsoLate")
             regions["Ch10SReq1PhoTightIsoPrompt"] = df.Filter("regionIdx == 10","Ch10SReq1PhoTightIsoPrompt")
             regions["Ch12SReq2PhoTightIsoPrompt"] = df.Filter("regionIdx == 12","Ch12SReq2PhoTightIsoPrompt")
             regions["Ch14SRgeq1SVHighDxygeq1PhoNotBHLate"] = df.Filter("regionIdx == 14","Ch14SRgeq1SVHighDxygeq1PhoNotBHLate")
@@ -817,7 +825,7 @@ class RJRAnalysis:
             regions["Ch14SRgeq1SVHighDxygeq1PhoNotBHLate"] = df.Filter(f"(regionIdx == 14) && {self._dfkinbins['Ch14SRgeq1SVHighDxygeq1PhoNotBHLate']['SVDelayedBin00']}","Ch14SRgeq1SVHighDxygeq1PhoNotBHLate")
         regions["failSel"] = df.Filter("regionIdx < 1","failSel")
         for i in range(-20,0):
-            regions[f"failSel_{i}"] = df.Filter(f"regionIdx == {i}",f"failSel_{i}")       
+            regions[f"failSel_{i}"] = df.Filter(f"regionIdx == {i}")#,f"failSel_{i}")       
         #regions["MsCR"] = df.Filter(MsCR,"MsCR")
         return regions
 
@@ -831,7 +839,7 @@ class RJRAnalysis:
             return overlaps
 
 
-    def define_regions_yaml(self, df, ch_name, mc):
+    def define_regions_yaml(self, df, ch_name, mc, unblind):
         #assuming baseline and cleaning are the same across yamls
         baseline = None
         cleaning = None
@@ -846,12 +854,13 @@ class RJRAnalysis:
             exit()
         yaml_regions = data['regions']
         regions = {}
-        regions["presel"] = df
+        regions["presel"] = df.Filter(f"({baseline}) && ({cleaning}) && ({kin})")
         for name, regdef in yaml_regions.items():
-            if not mc and "SR" in name:
-                continue
             cutstring = self.flatten_cutstring(regdef)
-            regions[name] = df.Filter(cutstring, name)
+            if not mc and "SR" in name and not unblind:
+                regions[name] = df.Filter("false",name)
+            else:   
+                regions[name] = df.Filter(cutstring, name)
         return regions
 
     def define_regions(self, df, ch_name, mc):
@@ -946,8 +955,10 @@ class RJRAnalysis:
         return ' && '.join(flatlist)
 
 
-    def fill_region_hists(self, df, proc_name, reg_name, ch_name, h1d, h2d, val = False):
+    def fill_region_hists(self, df, proc_name, reg_name, ch_name, h1d, h2d, val = False, unblind = False):
         if "failSel" in reg_name:
+            return
+        if not unblind and "MET" in proc_name and "SR" in ch_name:
             return
         if reg_name not in self._kin_bins:
             msbins = array('d',[0, 10000])
@@ -1087,14 +1098,6 @@ class RJRAnalysis:
                 "rjrIsr_PtIsr", "rjrIsr_RIsr", "evtFillWgt"
             )
         )   
-        
-        h2d.append(
-            df.Histo2D(
-                 (f"yieldsComp_{proc_name}_{ch_name}_{reg_name}", ";Ms;Rs",
-                 n_msbins, msbins, n_rsbins, rsbins),
-                "rjrIsr_RIsr", "rjrIsr_PtIsr", "evtFillWgt"
-            )
-        )
 
         #do Ms cut on Rs    
         h1d.append(
@@ -1172,17 +1175,19 @@ class RJRAnalysis:
                 df_triggers = df1.Filter(self._triggers,"triggers")
                 df_filters = df1.Filter(self._met_filters,"met_filters")
                 #do all presel cuts
-                df_presel = self.apply_preselection(df1,compressed)
-                df_list = [df_presel]
                 
                 #channels = self.define_channels(df_presel)
                 #ch_name = "ge1blpho"
                 #df_ge1pho = df_presel.Filter("nBaseLinePhotons > 0 && SV_nLeptonic == 0 && SV_nHadronic == 0")
                 ch_name = "presel"
+                df_list = []
                 if(args.yaml):
-                    regions = self.define_regions_yaml(df_presel, ch_name, mc)
+                    df_list.append(df1)
+                    regions = self.define_regions_yaml(df1, ch_name, mc, args.unblind)
                 else:
-                    regions = self.define_regions_ifelse(df_presel, ch_name, mc, args.val)
+                    df_presel = self.apply_preselection(df1,compressed)
+                    df_list.append(df_presel)
+                    regions = self.define_regions_ifelse(df_presel, mc, args.val)
 
                 #overlaps = self.check_overlap(df_presel)
 
@@ -1192,42 +1197,6 @@ class RJRAnalysis:
                     wt_counts[reg] = regions[reg].Sum("evtFillWgt")
 
                 report = df00.Report()
-                region = "presel"
-                #region = "Ch13CRgeq1SVLowDxygeq1PhoNotBHLate"
-                #region = "Ch15CRgeq1PhoMedIsoEarly"
-                print(region)
-                regions[region] = (regions[region]
-                    .Define("eta","baseLinePhoton_Eta").Define("iso_score","baseLinePhoton_isoANNScore").Define("bh_score","baseLinePhoton_beamHaloCNNScore")
-                    .Define("pt","baseLinePhoton_Pt").Define("tsig","baseLinePhoton_WTimeSig")
-                    .Define("LowPtEB","(pt < 100) && (eta < 1.479 && eta > -1.479) && (iso_score < 0.95 && iso_score >= 0.75)") 
-                    .Define("Eq2HighPtEB","(pt >= 100) && (eta < 1.479 && eta > -1.479) && ( iso_score < -0.0001*pt + 0.96 ) && (iso_score >= -0.0001*pt + 0.76 )") 
-                    .Define("Eq2Tight","(pt >= 100) && (eta < 1.479 && eta > -1.479) && ( iso_score >= -0.0001*pt + 0.96 )") 
-                    .Define("Eq1HighPtEB","(pt >= 100) && (eta < 1.479 && eta > -1.479) && (iso_score < -0.000198*pt + 1.0188) && ( iso_score >= -0.000198*pt + 0.7698)") 
-                    .Define("LeadEE","!(eta[0] < 1.479 && eta[0] > -1.479) && (iso_score[0] < 0.99)") 
-                    .Define("SubleadEE","!(eta[1] < 1.479 && eta[1] > -1.479) && (iso_score[1] < 0.95)")
-                    .Define("leadSVDxySig","HadronicSV_dxySig[0]").Define("leadSVMass","HadronicSV_mass[0]")
-                    .Define("pholatesig","passNPhoGe1SelectionLateSignal")
-                    .Define("earlytight","passNPhoGe1SelectionEarlyTightIsoCR")
-                    .Define("earlytight0","passNPhoGe1SelectionEarlyTightIso0NotBHCR")
-                    .Define("latemed","passNPhoGe1SelectionLateMedIsoCR")
-                    .Define("latemed0","passNPhoGe1SelectionLateMedIso0NotBHCR")
-                    .Define("npmediso_tsig","npmediso_tagged_lead_timesig")
-                    .Define("yamlch7","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoGe1SelectionEarlyNotBHCR == 1)")
-                    .Define("yamlch8","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionLateNotBHSR == 1) || (passNPhoGe1SelectionLateNotBHTightIsoSR == 1) || (passNPhoGe1SelectionLateTightIso0NotBHSR == 1))")
-                    .Define("yamlch13","(passNPhoGe1SelectionLateSignal == 1) && ((SV_nHadronic >= 1) && (HadronicSV_dxySig[0] < 800) && (HadronicSV_mass[0] > 15))")
-                    .Define("yamlch14","((SV_nHadronic >= 1) && (HadronicSV_dxySig[0] > 800) && (HadronicSV_mass[0] > 15)) && (SV_nLeptonic == 0) && (passNPhoGe1SelectionLateSignal == 1)")
-                    .Define("yamlch15","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoGe1SelectionEarlyMedIsoCR == 1) || (passNPhoGe1SelectionEarlyMedIso0NotBHCR == 1)")
-                    .Define("yamlch16","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionLateMedIsoCR == 1) || (passNPhoGe1SelectionLateMedIso0NotBHCR == 1))")
-                )
-                chnum = "8"
-                dispcols = [f"yamlch{chnum}","tsig","iso_score","bh_score","npmediso_tagged_lead_timesig"]
-                if not args.yaml:
-                    dispcols.append("regionIdx")
-                    #regions[region].Filter(f"(yamlch{chnum})").Display(dispcols,20).Print()
-                    #regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Display(dispcols,20).Print()
-                    #print(f"events not in ifelse in yamlch{chnum}",regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Count().GetValue()) 
-                    regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Display(dispcols).Print()
-                    print(f"events in ifelse not in yamlch{chnum}",regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Count().GetValue()) 
                 #for key, count in overlaps.items():
                 #    if(count.GetValue() > 0):
                 #        print("overlap",key,count.GetValue())
@@ -1264,29 +1233,20 @@ class RJRAnalysis:
                 self._eff_parser.write_latex_table(outfile, selected_data, args.lumi, total_eff)
                 print("Wrote efficiencies for process",proc,"to",outfile)
 
+    def ProcessCtauStr(self, ctau):
+        if "p" in ctau:
+            ctau = ctau.replace("p",".")
+        return float(ctau) * 100 #go from m to cm
+
     def GetProcessName(self, proc, mGl = None, mN2 = None, mN1 = None, ctau = None):
         procstr = proc
         if proc == "METPD":
-            procstr = "METFullRunII_RunIII22_23"   
-        if "SMS" in proc: #assume only one mass point given
-            if mGl is not None:
-                procstr += "mGl"+mGl
-            else:
-                procstr += "mGlAll"
-            if mN2 is not None:
-                procstr += "mN2"+mN2
-            else:
-                procstr += "mN2All"
-            if mN1 is not None:
-                procstr += "mN1"+mN1
-            else:
-                procstr += "mN1All"
-            if ctau is not None:
-                if "." in ctau:
-                    ctau = ctau.replace(".","p")
-                procstr += "ct"+ctau
-            else:
-                procstr += "ctAll"
+            procstr = "METFullRunII_RunIII"   
+        if "rwtct" in proc:
+            newct = proc[proc.find("rwtct")+5:]
+            procstr = proc[:proc.find("_rwtct")]
+            oldct = procstr[procstr.find("ct")+2:]
+            procstr = procstr.replace(oldct, newct)
         return procstr
 
 # -------------------------
@@ -1300,10 +1260,26 @@ class RJRAnalysis:
         mGl = args.mGl
         mN2 = args.mN2
         mN1 = args.mN1
-        ctau = args.ctau
+        ctaus = args.ctau
+        if ctaus is None:
+            ctaus = [None] 
+        new_taus = args.new_taus
+        if new_taus is None:
+            new_taus = ctaus
+        if "SMS_gogoGZ" in procs:
+            for ctaupair in zip(ctaus, new_taus):
+                procs.append(f"SMS_gogoGZmGl{mGl}mN2{mN2}mN1{mN1}ct{ctaupair[0]}_rwtct{ctaupair[1]}")
+            procs.remove("SMS_gogoGZ")
  
         fileprocessor = FileProcessor()
-    
+   
+        self.set_yaml_path(args.val)
+        if(args.yaml):
+            print("Using yaml",self._yaml_path)
+        else:
+            print("Using IfElse logic")
+
+ 
         ofilename = ""
         hists1d, hists2d = [], []
         jsondict = {}
@@ -1315,18 +1291,18 @@ class RJRAnalysis:
         jsonname += ".json"
         self.get_kin_bins()
         for proc in procs:
-            procstr = self.GetProcessName(proc, mGl, mN2, mN1, ctau)
+            procstr = self.GetProcessName(proc)
             files = []
             compressed = False
+            ctaupair = (None, None)
             if "SMS" in proc: #assume only one mass point given
-                files += fileprocessor.GetFiles(proc, mGl, mN2, mN1, ctau)
+                ctaupair = (proc[proc.find("ct")+2:proc.find("_rwtct")], proc[proc.find("rwtct")+5:])
+                files += fileprocessor.GetFiles("SMS_gogoGZ", mGl, mN2, mN1, ctaupair[0])
                 if int(mGl) - int(mN1) <= 200:
                     compressed = True
                 if(len(files) < 1):
-                    print("No files found for ",proc,"with mGl",mGl,"mN2",mN2,"mN1",mN1,"ctau",ctau)
+                    print("No files found for ",procstr)
                     continue
-                if "gogoGZ" in files[0] and "skims_v46" in files[0]: #only do for skims_v46 gogoGZ signal samples
-                    checkForBadWgts = True
             else: 
                 files += fileprocessor.GetFiles(proc)
             if len(files) == 0:
@@ -1334,10 +1310,11 @@ class RJRAnalysis:
                 continue
             #remove underscores from procstr
             procstr = procstr.replace("_","")
-            if ofilename == "":
-                ofilename = procstr
-            else:
-                ofilename += "_"+procstr
+            if "SMS" not in procstr:
+                if ofilename == "":
+                    ofilename = procstr
+                else:
+                    ofilename += "_"+procstr
             print("Doing process",procstr)
             
             mc = True
@@ -1350,7 +1327,7 @@ class RJRAnalysis:
     
     
             df00 = RDataFrame(chain)
-            print("There are",df00.Filter("rjr_Ms.size() == 0 && nPhotons > 1").Count().GetValue(),"events without RJR info")
+            #print("There are",df00.Filter("rjr_Ms.size() == 0 && nPhotons > 1").Count().GetValue(),"events without RJR info")
             df = df00.Filter("rjr_Rs.size() > 0 && rjr_Ms.size() > 0") #in case these have size 0, can lead to undefined behavior
             df1 = (
                 df.Define("rjr_Rs0", "rjr_Rs[0]")
@@ -1359,6 +1336,14 @@ class RJRAnalysis:
             if(mc):
                 lumi_factor = args.lumi 
                 df1 = df1.Redefine("evtFillWgt",f"evtFillWgt*{lumi_factor}")
+            if "SMS" in proc and ctaupair[1] != ctaupair[0]:
+                tau_old = self.ProcessCtauStr(ctaupair[0])
+                tau_new = self.ProcessCtauStr(ctaupair[1])
+                if tau_old != tau_new:
+                    print(f"Reweighting ctau {tau_old} to {tau_new}")
+                    #define xa xb ct weights
+                    df1 = df1.Define("xawt",f"LifetimeReweight(Xa_ctau, {tau_old}, {tau_new})").Define("xbwt",f"LifetimeReweight(Xb_ctau, {tau_old}, {tau_new})")
+                    df1 = df1.Redefine("evtFillWgt",f"evtFillWgt*xawt*xbwt")
             #do individual presel cuts here so they are printed out
             df_metcut = df1.Filter(self._metcut,self._metcut)
             df_pts = df1.Filter(self._ptscut, self._ptscut)
@@ -1374,23 +1359,61 @@ class RJRAnalysis:
             #df_ge1pho = df_presel.Filter("nBaseLinePhotons > 0 && SV_nLeptonic == 0 && SV_nHadronic == 0")
             ch_name = "presel"
             if(args.yaml):
-                regions = self.define_regions_yaml(df_presel, ch_name, mc)
+                regions = self.define_regions_yaml(df_presel, ch_name, mc, args.unblind)
             else:
-                regions = self.define_regions_ifelse(df_presel, ch_name, mc, args.val, args.unblind)
+                regions = self.define_regions_ifelse(df_presel, mc, args.val, args.unblind)
 
 
             binned_regions = self.do_kin_bins(regions)
-            jsondict = MakeBFIRegions(jsondict, procstr, binned_regions)
+            procjsondict = MakeBFIRegions(jsondict, procstr, binned_regions)
+            jsondict = jsondict | procjsondict
 
             for reg_name, df_reg in regions.items():
                 #print("  doing region", reg_name)
                 #define columns with lowest Rs/Ms cuts
                 self.fill_region_hists(
                     df_reg, procstr, reg_name, ch_name,
-                    hists1d, hists2d, args.val
+                    hists1d, hists2d, args.val, args.unblind
                 )
                 df_list.append(df_reg)
             report = df00.Report() 
+            region = "presel"
+            #region = "Ch13CRgeq1SVLowDxygeq1PhoNotBHLate"
+            #region = "Ch15CRgeq1PhoMedIsoEarly"
+            if region in regions.keys() and args.testLogic:
+                print(region)
+                regions[region] = (regions[region]
+                    .Define("eta","baseLinePhoton_Eta").Define("iso_score","baseLinePhoton_isoANNScore").Define("bh_score","baseLinePhoton_beamHaloCNNScore")
+                    .Define("pt","baseLinePhoton_Pt").Define("tsig","baseLinePhoton_WTimeSig")
+                    .Define("LowPtEB","(pt < 100) && (eta < 1.479 && eta > -1.479) && (iso_score < 0.95 && iso_score >= 0.75)") 
+                    .Define("Eq2HighPtEB","(pt >= 100) && (eta < 1.479 && eta > -1.479) && ( iso_score < -0.0001*pt + 0.96 ) && (iso_score >= -0.0001*pt + 0.76 )") 
+                    .Define("Eq2Tight","(pt >= 100) && (eta < 1.479 && eta > -1.479) && ( iso_score >= -0.0001*pt + 0.96 )") 
+                    .Define("Eq1HighPtEB","(pt >= 100) && (eta < 1.479 && eta > -1.479) && (iso_score < -0.000198*pt + 1.0188) && ( iso_score >= -0.000198*pt + 0.7698)") 
+                    .Define("LeadEE","!(eta[0] < 1.479 && eta[0] > -1.479) && (iso_score[0] < 0.99)") 
+                    .Define("SubleadEE","!(eta[1] < 1.479 && eta[1] > -1.479) && (iso_score[1] < 0.95)")
+                    .Define("leadSVDxySig","HadronicSV_dxySig[0]").Define("leadSVMass","HadronicSV_mass[0]")
+                    .Define("pholatesig","passNPhoGe1SelectionLateSignal")
+                    .Define("earlytight","passNPhoGe1SelectionEarlyTightIsoCR")
+                    .Define("earlytight0","passNPhoGe1SelectionEarlyTightIso0NotBHCR")
+                    .Define("latemed","passNPhoGe1SelectionLateMedIsoCR")
+                    .Define("latemed0","passNPhoGe1SelectionLateMedIso0NotBHCR")
+                    .Define("npmediso_tsig","npmediso_tagged_lead_timesig")
+                    .Define("yamlch9","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoEq1SelectionPromptMedIsoValCR == 1) && ( ( rjrNJetsJa[0] >= 3 && rjrNJetsJb[0] >= 2 ) || ( rjrNJetsJa[0] >= 2 && rjrNJetsJb[0] >= 3 ) )")
+                    .Define("yamlch10","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoEq1SelectionPromptTightIsoValSR == 1) && ( ( rjrNJetsJa[0] >= 3 && rjrNJetsJb[0] >= 2 ) || ( rjrNJetsJa[0] >= 2 && rjrNJetsJb[0] >= 3 ) )")
+                    .Define("yamlch11","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoEq2SelectionPromptMedIsoValCR == 1)")
+                    .Define("yamlch13","(SV_nLeptonic == 0) && ((SV_nHadronic >= 1) && (HadronicSV_dxySig[0] < 200) && (HadronicSV_mass[0] > 15)) && (passNPhoGe1SelectionLateSignal == 1)")
+                    .Define("yamlch15","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionEarlyMedIsoValCR == 1) || (passNPhoGe1SelectionEarlyMedIso0NotBHValCR == 1))")
+                    .Define("yamlch16","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionLateMedIsoValCR == 1) || (passNPhoGe1SelectionLateMedIso0NotBHValCR == 1))")
+                    .Define("yamlch17","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionEarlyTightIsoValCR == 1) || (passNPhoGe1SelectionEarlyTightIso0NotBHValCR == 1))")
+                )
+                chnum = "11"
+                dispcols = [f"yamlch{chnum}","tsig","iso_score","val_npmediso_tagged_lead_timesig"]
+                if not args.yaml:
+                    dispcols.append("regionIdx")
+                    regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Display(dispcols,20).Print()
+                    print(f"events not in ifelse in yamlch{chnum}",regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Count().GetValue()) 
+                    regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Display(dispcols,20).Print()
+                    print(f"events in ifelse not in yamlch{chnum}",regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Count().GetValue()) 
             if(args.showOutput):
                 # select cuts
                 lines = self._eff_parser.report2str(report)
@@ -1401,7 +1424,9 @@ class RJRAnalysis:
         #process loop end
     
         if procstr == "":
-            return 
+            return
+        if any("SMS_gogoGZ" in proc for proc in args.proc):
+            ofilename += "SMSgogoGZ" 
         if ofilename_extra:
             ofilename += f"_{ofilename_extra}"
         ofilename += "_rjrObs.root"
@@ -1427,13 +1452,6 @@ if __name__ == "__main__":
         description="Run RJR analysis"
     )
 
-    #TODO - set integrated luminosity
-    #parser.add_argument(
-    #    "--lumi",
-    #    type=float,
-    #    default=138,
-    #    help="Integrated lumi for scaling MC samples"
-    #)
 
     parser.add_argument(
         "--proc",
@@ -1465,7 +1483,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ctau",
         default=None,
-        help="ctau for SMS process"
+        nargs='+',
+        help="ctau(s) for SMS process"
+    )
+    
+    parser.add_argument(
+        "--new_taus",
+        default=None,
+        nargs='+',
+        help="new taus for reweighting"
     )
 
     parser.add_argument(
@@ -1512,6 +1538,12 @@ if __name__ == "__main__":
     parser.add_argument(
         '--unblind',
         help='unblind regions',
+        action='store_true',
+        default=False
+    )
+    parser.add_argument(
+        '--testLogic',
+        help='test region logic',
         action='store_true',
         default=False
     )
