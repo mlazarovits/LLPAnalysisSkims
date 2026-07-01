@@ -217,54 +217,35 @@ class RJRAnalysis:
                                 if(lead_timesig < st_bhearly){ //early bh cr
                                     return 5;
                                 }
-                                else if(lead_timesig >= 2.5) //late bh cr
+                                else if(lead_timesig >= 2.5){ //late bh cr
                                     return 6;
-                                else
+                                }
+                                else{
                                     return -9;
+                                }
                             }
                             else{ //no bh regions
-                                if(Any(bh_scores < 0.95 && bh_scores >= 0.917252)){ //!bh regions
-                                    auto mask = ((bh_scores < 0.95) && (bh_scores >= 0.917252));
+                                if(Any(((bh_scores < 0.95) && (bh_scores >= 0.917252)) && ((iso_scores >= 0.5) && (iso_scores < 0.9)))){ //!bh+tight regions
+                                    auto mask = ( ((bh_scores < 0.95) && (bh_scores >= 0.917252)) && ((iso_scores >= 0.5) && (iso_scores < 0.9)));
                                     auto notbh_timesigs = timesigs[mask];
                                     
-                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_bhearly) || notbh_timesigs >= 2.5][0];
-
+                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_isoearly) || notbh_timesigs >= 2.5][0];
                                     if(lead_timesig < st_bhearly && lead_timesig >= -10){ //early !bh cr
                                         return 7;
+                                    }
+                                    else if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly){ //early iso cr
+                                        return 17;
                                     }
                                     else if(lead_timesig >= 2.5){ //late !bhiso sr
                                         return 8;
                                     }
-                                    else{ //recover these in np iso regions
-                                        if(Any(iso_scores >= 0.5 && iso_scores < 0.6)){ //noniso np region
-                                            auto mask = ((iso_scores < 0.6) && (iso_scores >= 0.5));
-                                            auto mediso_timesigs = timesigs[mask];
-                                            
-                                            auto lead_timesig = mediso_timesigs[(mediso_timesigs >= st_bhearly && mediso_timesigs < st_isoearly) || mediso_timesigs >= 2.5][0];
-                                            if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early noniso cr
-                                                return 15;
-                                            else if(lead_timesig >= 2.5) //late noniso cr
-                                                return 16;
-                                            else
-                                                return -10; //TODO - move to prompt
-                                        }
-                                        else{ //iso np region
-                                            auto mask = ((iso_scores >= 0.6) && (iso_scores < 0.8));
-                                            auto tightiso_timesigs = timesigs[mask];
-                                            
-                                            auto lead_timesig = tightiso_timesigs[(tightiso_timesigs >= st_bhearly && tightiso_timesigs < st_isoearly) || tightiso_timesigs >= 2.5][0];
-                                            if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early iso cr
-                                                return 17;
-                                            else if(lead_timesig >= 2.5) //late !bhiso sr
-                                                return 8;
-                                            else
-                                                return -11; //TODO - move to prompt
-                                        }
+                                    else{
+                                        return -11;
                                     }
                                 }
-                                else{ //np iso regions
-                                    if(Any(iso_scores < 0.6 && iso_scores >= 0.5)){ //noniso np region
-                                        auto mask = iso_scores < 0.6 && iso_scores >= 0.5;
+                                else{ //np noniso regions
+                                    if(Any(iso_scores >= 0.4 && iso_scores < 0.5)){ //noniso np region
+                                        auto mask = iso_scores < 0.5 && iso_scores >= 0.4;
                                         auto lead_idx = Nonzero(mask)[0];
                                         
                                         auto lead_timesig = timesigs[lead_idx];
@@ -275,21 +256,10 @@ class RJRAnalysis:
                                         else
                                             return -12;
                                     }
-                                    else{ //iso np region
-                                        auto mask = ((iso_scores >= 0.6) && (iso_scores < 0.8));
-                                        auto iso_timesigs = timesigs[mask];
-                                        //CAUTION - if no elements of masked vector satisfy giving masking condition, the mask will return exactly 0 
-                                        auto lead_timesig = iso_timesigs[(iso_timesigs < st_isoearly && iso_timesigs >= st_bhearly) || iso_timesigs >= 2.5][0];
-                                        if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early iso cr
-                                            return 17;
-                                        else if(lead_timesig >= 2.5) //late !bhiso sr
-                                            return 8;
-                                        else
-                                            return -13;
+                                    else{
+                                        return -13;
                                     }
-
                                 }
-
                             }
                         }
                         else{ //prompt
@@ -512,43 +482,22 @@ class RJRAnalysis:
                                     return -9;
                             }
                             else{ //no bh regions
-                                if(Any(bh_scores < 0.185)){ //!bh regions
-                                    auto mask = bh_scores < 0.185;
+                                if(Any((bh_scores < 0.185) && (iso_scores >= noniso_cutoff))){ //!bh+tight regions
+                                    auto mask = ((bh_scores < 0.185) && (iso_scores >= noniso_cutoff));
                                     auto notbh_timesigs = timesigs[mask];
                                     
-                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_bhearly) || notbh_timesigs >= 2.5][0];
-
+                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_isoearly) || notbh_timesigs >= 2.5][0];
                                     if(lead_timesig < st_bhearly && lead_timesig >= -10){ //early !bh cr
                                         return 7;
+                                    }
+                                    else if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly){ //early iso cr
+                                        return 17;
                                     }
                                     else if(lead_timesig >= 2.5){ //late !bhiso sr
                                         return 8;
                                     }
-                                    else{ //recover these in np iso regions
-                                        if(Any(iso_scores < noniso_cutoff && iso_scores >= 0.4)){ //noniso np region
-                                            auto mask = (iso_scores < noniso_cutoff && iso_scores >= 0.4);
-                                            auto mediso_timesigs = timesigs[mask];
-                                            
-                                            auto lead_timesig = mediso_timesigs[(mediso_timesigs >= st_bhearly && mediso_timesigs < st_isoearly) || mediso_timesigs >= 2.5][0];
-                                            if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early noniso cr
-                                                return 15;
-                                            else if(lead_timesig >= 2.5) //late noniso cr
-                                                return 16;
-                                            else
-                                                return -10; //TODO - move to prompt
-                                        }
-                                        else{ //iso np region
-                                            auto mask = iso_scores >= noniso_cutoff;
-                                            auto tightiso_timesigs = timesigs[mask];
-                                            
-                                            auto lead_timesig = tightiso_timesigs[(tightiso_timesigs >= st_bhearly && tightiso_timesigs < st_isoearly) || tightiso_timesigs >= 2.5][0];
-                                            if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early iso cr
-                                                return 17;
-                                            else if(lead_timesig >= 2.5) //late !bhiso sr
-                                                return 8;
-                                            else
-                                                return -11; //TODO - move to prompt
-                                        }
+                                    else{
+                                        return -11;
                                     }
                                 }
                                 else{ //np iso regions
@@ -564,19 +513,9 @@ class RJRAnalysis:
                                         else
                                             return -12;
                                     }
-                                    else{ //iso np region
-                                        auto mask = iso_scores >= noniso_cutoff;
-                                        auto iso_timesigs = timesigs[mask];
-                                        //CAUTION - if no elements of masked vector satisfy giving masking condition, the mask will return exactly 0 
-                                        auto lead_timesig = iso_timesigs[(iso_timesigs < st_isoearly && iso_timesigs >= st_bhearly) || iso_timesigs >= 2.5][0];
-                                        if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early iso cr
-                                            return 17;
-                                        else if(lead_timesig >= 2.5) //late !bhiso sr
-                                            return 8;
-                                        else
-                                            return -13;
+                                    else{
+                                        return -13;
                                     }
-
                                 }
 
                             }
@@ -764,7 +703,6 @@ class RJRAnalysis:
 
         self._dfkinbins["Ch8SRgeq1PhoNotBHLate"] = PhoDelayedbins
         self._dfkinbins["Ch18CRGJetsLate"] = PhoDelayedbins
-        self._dfkinbins["Ch19CRRsLate"] = PhoDelayedbins
         #self._dfkinbins["Ch18SRgeq1PhoTightIsoLate"] = PhoDelayedbins
 
     def do_kin_bins(self, region_dict):
@@ -802,9 +740,9 @@ class RJRAnalysis:
             "Ch16CRgeq1PhoMedIsoLate" : df.Filter("regionIdx == 16","Ch16CRgeq1PhoMedIsoLate"),
             "Ch17CRgeq1PhoTightIsoEarly" : df.Filter("regionIdx == 17","Ch17CRgeq1PhoTightIsoEarly"),
             "Ch18CRGJetsLate" : df.Filter("((nBaseLinePhotons == 1 && (baseLinePhoton_WTimeSig[0] > 2.5 && baseLinePhoton_GJetsCR[0] == 1)) || (nBaseLinePhotons == 2 && ( baseLinePhoton_WTimeSig[0] > 2.5 && baseLinePhoton_GJetsCR[0] == 1) || ( baseLinePhoton_WTimeSig[1] > 2.5 && baseLinePhoton_GJetsCR[1] == 1)) )","Ch18CRGJetsLate"),
-            "Ch19CRRsLate" : df.Filter("((rjr_Ms[0] >= 2000) && (rjr_Rs[0] < 0.15))","Ch19CRRsLate"),
         }
  
+        regions["presel"] = df
         if unblind or mc:
             regions["Ch2SRGeLep1"] = df.Filter("regionIdx == 2","Ch2SRGeLep1")
             regions["Ch4SRGeHad1"] = df.Filter("regionIdx == 4","Ch4SRGeHad1")
@@ -814,7 +752,6 @@ class RJRAnalysis:
             regions["Ch10SReq1PhoTightIsoPrompt"] = df.Filter("regionIdx == 10","Ch10SReq1PhoTightIsoPrompt")
             regions["Ch12SReq2PhoTightIsoPrompt"] = df.Filter("regionIdx == 12","Ch12SReq2PhoTightIsoPrompt")
             regions["Ch14SRgeq1SVHighDxygeq1PhoNotBHLate"] = df.Filter("regionIdx == 14","Ch14SRgeq1SVHighDxygeq1PhoNotBHLate")
-            regions["presel"] = df
         #create regions of 00 for data (!unblind and !mc)
         else:
             regions["Ch2SRGeLep1"] = df.Filter(f"(regionIdx == 2) && {self._dfkinbins['Ch2SRGeLep1']['bLep00']}","Ch2SRGeLep1")
@@ -1129,14 +1066,12 @@ class RJRAnalysis:
         fileprocessor = FileProcessor()
         for proc in args.proc:
             selected_data = {}
-            procstr = self.GetProcessName(proc, mGl, mN2, mN1, ctau)
             if "SMS" not in proc:
                 print("Can only do efficiencies for signal, doing efficiencies for",proc)
                 exit()
+            procstr = self.GetProcessName(proc, mGl, mN2, mN1, ctau[0])
             mc = True
-            if "MET" in proc:
-                mc = False
-            files = fileprocessor.GetFiles(proc, mGl, mN2, mN1, ctau)
+            files = fileprocessor.GetFiles(proc, mGl, mN2, mN1, ctau[0])
             compressed = False
             if int(mGl) - int(mN1) <= 200:
                 compressed = True
@@ -1377,6 +1312,13 @@ class RJRAnalysis:
                 )
                 df_list.append(df_reg)
             report = df00.Report() 
+            if(args.showOutput):
+                # select cuts
+                lines = self._eff_parser.report2str(report)
+                for line in lines:
+                    print(line)
+            else:
+                report.Print() #triggers event loop with Print() call dereferencing
             region = "presel"
             #region = "Ch13CRgeq1SVLowDxygeq1PhoNotBHLate"
             #region = "Ch15CRgeq1PhoMedIsoEarly"
@@ -1385,42 +1327,18 @@ class RJRAnalysis:
                 regions[region] = (regions[region]
                     .Define("eta","baseLinePhoton_Eta").Define("iso_score","baseLinePhoton_isoANNScore").Define("bh_score","baseLinePhoton_beamHaloCNNScore")
                     .Define("pt","baseLinePhoton_Pt").Define("tsig","baseLinePhoton_WTimeSig")
-                    .Define("LowPtEB","(pt < 100) && (eta < 1.479 && eta > -1.479) && (iso_score < 0.95 && iso_score >= 0.75)") 
-                    .Define("Eq2HighPtEB","(pt >= 100) && (eta < 1.479 && eta > -1.479) && ( iso_score < -0.0001*pt + 0.96 ) && (iso_score >= -0.0001*pt + 0.76 )") 
-                    .Define("Eq2Tight","(pt >= 100) && (eta < 1.479 && eta > -1.479) && ( iso_score >= -0.0001*pt + 0.96 )") 
-                    .Define("Eq1HighPtEB","(pt >= 100) && (eta < 1.479 && eta > -1.479) && (iso_score < -0.000198*pt + 1.0188) && ( iso_score >= -0.000198*pt + 0.7698)") 
-                    .Define("LeadEE","!(eta[0] < 1.479 && eta[0] > -1.479) && (iso_score[0] < 0.99)") 
-                    .Define("SubleadEE","!(eta[1] < 1.479 && eta[1] > -1.479) && (iso_score[1] < 0.95)")
-                    .Define("leadSVDxySig","HadronicSV_dxySig[0]").Define("leadSVMass","HadronicSV_mass[0]")
-                    .Define("pholatesig","passNPhoGe1SelectionLateSignal")
-                    .Define("earlytight","passNPhoGe1SelectionEarlyTightIsoCR")
-                    .Define("earlytight0","passNPhoGe1SelectionEarlyTightIso0NotBHCR")
-                    .Define("latemed","passNPhoGe1SelectionLateMedIsoCR")
-                    .Define("latemed0","passNPhoGe1SelectionLateMedIso0NotBHCR")
-                    .Define("npmediso_tsig","npmediso_tagged_lead_timesig")
-                    .Define("yamlch9","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoEq1SelectionPromptMedIsoValCR == 1) && ( ( rjrNJetsJa[0] >= 3 && rjrNJetsJb[0] >= 2 ) || ( rjrNJetsJa[0] >= 2 && rjrNJetsJb[0] >= 3 ) )")
-                    .Define("yamlch10","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoEq1SelectionPromptTightIsoValSR == 1) && ( ( rjrNJetsJa[0] >= 3 && rjrNJetsJb[0] >= 2 ) || ( rjrNJetsJa[0] >= 2 && rjrNJetsJb[0] >= 3 ) )")
-                    .Define("yamlch11","((SV_nHadronic==0) && (SV_nLeptonic==0)) && (passNPhoEq2SelectionPromptMedIsoValCR == 1)")
-                    .Define("yamlch13","(SV_nLeptonic == 0) && ((SV_nHadronic >= 1) && (HadronicSV_dxySig[0] < 200) && (HadronicSV_mass[0] > 15)) && (passNPhoGe1SelectionLateSignal == 1)")
-                    .Define("yamlch15","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionEarlyMedIsoValCR == 1) || (passNPhoGe1SelectionEarlyMedIso0NotBHValCR == 1))")
-                    .Define("yamlch16","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionLateMedIsoValCR == 1) || (passNPhoGe1SelectionLateMedIso0NotBHValCR == 1))")
-                    .Define("yamlch17","((SV_nHadronic==0) && (SV_nLeptonic==0)) && ((passNPhoGe1SelectionEarlyTightIsoValCR == 1) || (passNPhoGe1SelectionEarlyTightIso0NotBHValCR == 1))")
+                    #.Define("pholatesig","passNPhoGe1SelectionLateSignal")
+                    #.Define("earlytight","passNPhoGe1SelectionEarlyTightIsoCR")
+                    #.Define("earlytight0","passNPhoGe1SelectionEarlyTightIso0NotBHCR")
+                    #.Define("latemed","passNPhoGe1SelectionLateMedIsoCR")
+                    #.Define("latemed0","passNPhoGe1SelectionLateMedIso0NotBHCR")
+                    #.Define("npmediso_tsig","npmediso_tagged_lead_timesig")
                 )
-                chnum = "11"
-                dispcols = [f"yamlch{chnum}","tsig","iso_score","val_npmediso_tagged_lead_timesig"]
+                chnum = "8"
+                dispcols = ["tsig","iso_score","bh_score"]
                 if not args.yaml:
                     dispcols.append("regionIdx")
-                    regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Display(dispcols,20).Print()
-                    print(f"events not in ifelse in yamlch{chnum}",regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Count().GetValue()) 
-                    regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Display(dispcols,20).Print()
-                    print(f"events in ifelse not in yamlch{chnum}",regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Count().GetValue()) 
-            if(args.showOutput):
-                # select cuts
-                lines = self._eff_parser.report2str(report)
-                for line in lines:
-                    print(line)
-            else:
-                report.Print() #triggers event loop with Print() call dereferencing
+                    regions[region].Filter(f"(nBaseLinePhotons == 2) && (regionIdx == {chnum}) && (bh_score[1] < 0.185 && iso_score[1] <= 0.9)").Display(dispcols,20).Print()
         #process loop end
     
         if procstr == "":
