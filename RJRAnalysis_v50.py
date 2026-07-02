@@ -466,13 +466,6 @@ class RJRAnalysis:
                                 auto bh_timesigs = timesigs[mask];
                                 
                                 auto lead_timesig = bh_timesigs[bh_timesigs < st_bhearly || bh_timesigs >= 2.5][0];
-                                    //cout << "bh scores " << endl;
-                                    //for(auto b : bh_scores) cout << b << endl;
-                                    //cout << "timesigs " << endl;
-                                    //for(auto t : timesigs) cout << t << endl;
-                                    //cout << "bh timesigs " << endl;
-                                    //for(auto t : bh_timesigs) cout << t << endl;
-                                    //cout << "lead_timesig " << lead_timesig << endl; cout << endl; 
                                 if(lead_timesig < st_bhearly){ //early bh cr
                                     return 5;
                                 }
@@ -482,40 +475,39 @@ class RJRAnalysis:
                                     return -9;
                             }
                             else{ //no bh regions
-                                if(Any((bh_scores < 0.185) && (iso_scores >= noniso_cutoff))){ //!bh+tight regions
-                                    auto mask = ((bh_scores < 0.185) && (iso_scores >= noniso_cutoff));
-                                    auto notbh_timesigs = timesigs[mask];
+                                if(Any(iso_scores < noniso_cutoff && iso_scores >= 0.4)){ //mediso np region
+                                    auto mask = iso_scores < noniso_cutoff && iso_scores >= 0.4;
+                                    auto lead_idx = Nonzero(mask)[0];
                                     
-                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_isoearly) || notbh_timesigs >= 2.5][0];
-                                    if(lead_timesig < st_bhearly && lead_timesig >= -10){ //early !bh cr
-                                        return 7;
-                                    }
-                                    else if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly){ //early iso cr
-                                        return 17;
-                                    }
-                                    else if(lead_timesig >= 2.5){ //late !bhiso sr
-                                        return 8;
-                                    }
-                                    else{
-                                        return -11;
-                                    }
+                                    auto lead_timesig = timesigs[lead_idx];
+                                    if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early mediso cr
+                                        return 15;
+                                    else if(lead_timesig >= 2.5) //late noniso cr
+                                        return 16;
+                                    else
+                                        return -12;
                                 }
-                                else{ //np iso regions
-                                    if(Any(iso_scores < noniso_cutoff && iso_scores >= 0.4)){ //noniso np region
-                                        auto mask = iso_scores < noniso_cutoff && iso_scores >= 0.4;
-                                        auto lead_idx = Nonzero(mask)[0];
+                                else{ //iso/!bh regions
+                                    if(Any((bh_scores < 0.185) && (iso_scores >= noniso_cutoff))){ //!bh+tight regions
+                                        auto mask = ((bh_scores < 0.185) && (iso_scores >= noniso_cutoff));
+                                        auto notbh_timesigs = timesigs[mask];
                                         
-                                        auto lead_timesig = timesigs[lead_idx];
-                                        if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early noniso cr
-                                            return 15;
-                                        else if(lead_timesig >= 2.5) //late noniso cr
-                                            return 16;
-                                        else
-                                            return -12;
+                                        auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_isoearly) || notbh_timesigs >= 2.5][0];
+                                        if(lead_timesig < st_bhearly && lead_timesig >= -10){ //early !bh cr
+                                            return 7;
+                                        }
+                                        else if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly){ //early iso cr
+                                            return 17;
+                                        }
+                                        else if(lead_timesig >= 2.5){ //late !bhiso sr
+                                            return 8;
+                                        }
+                                        else{
+                                            return -11;
+                                        }
                                     }
-                                    else{
+                                    else
                                         return -13;
-                                    }
                                 }
 
                             }
