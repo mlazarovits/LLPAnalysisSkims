@@ -5,7 +5,9 @@ import yaml
 import awkward as ak
 import argparse
 import os
+import numpy as np
 from FileProcessor import FileProcessor
+
 import re
 # ROOT.EnableImplicitMT()  # optional
 
@@ -391,7 +393,7 @@ class RJRAnalysis:
             int getRegionIdx(const int nSVHad, const RVecF& SVHadDxySig, const RVecF& SVHadMass, const int nSVLep, const RVecF& SVLepDxySig, const int nPhotons, const RVecF& timesigs, const RVecF& bh_scores, const RVecF& iso_scores, const RVecF& photon_eta, const RVecF& photon_pt, const RVecI& nRJRJetsA, const RVecI& nRJRJetsB){
                 double st_bhearly = -3;
                 double st_isoearly = -2.5;
-                double noniso_cutoff = 0.9; //>= is iso, < is noniso
+                double noniso_cutoff = 0.95; //>= is iso, < is noniso
 
                 if(nSVLep > 0){
                     if(SVLepDxySig[0] < 800)
@@ -490,24 +492,24 @@ class RJRAnalysis:
                                         return 8;
                                     }
                                     else{
-                                        return -11;
+                                        return -10;
                                     }
                                 }
                                 else{
-                                    if(Any( (bh_scores < 0.185) && (iso_scores < noniso_cutoff && iso_scores >= 0.4))){ //mediso np region
-                                        auto mask = ((iso_scores < noniso_cutoff && iso_scores >= 0.4) && (bh_scores < 0.185));
-                                        auto lead_idx = Nonzero(mask)[0];
-                                        
-                                        auto lead_timesig = timesigs[lead_idx];
-                                        if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early mediso cr
-                                            return 15;
-                                        else if(lead_timesig >= 2.5) //late noniso cr
-                                            return 16;
-                                        else
-                                            return -12;
-                                    }
-                                    else
-                                        return -13;
+                                	if(Any( (bh_scores < 0.185) && (iso_scores < noniso_cutoff && iso_scores >= 0.4))){ //mediso np region
+                                	    auto mask = ((iso_scores < noniso_cutoff && iso_scores >= 0.4) && (bh_scores < 0.185));
+                                	    auto lead_idx = Nonzero(mask)[0];
+                                	    
+                                	    auto lead_timesig = timesigs[lead_idx];
+                                	    if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early mediso cr
+                                	        return 15;
+                                	    else if(lead_timesig >= 2.5) //late noniso cr
+                                	        return 16;
+                                	    else
+                                	        return -12;
+                                	}
+                                    	else
+                                    	    return -13;
                                 }
 
                             }
@@ -884,166 +886,222 @@ class RJRAnalysis:
         return ' && '.join(flatlist)
 
 
-    def fill_region_hists(self, df, proc_name, reg_name, ch_name, h1d, h2d, val = False, unblind = False):
-        if "failSel" in reg_name:
-            return
-        if not unblind and "MET" in proc_name and "SR" in ch_name:
-            return
-        if reg_name not in self._kin_bins:
-            msbins = array('d',[0, 10000])
-            rsbins = array('d',[0, 1])
-            ptisrbins = array('d',[0,3000])
-        else:
-            reg_name_key = next(k for k in self._kin_bins if k in reg_name)
-            msbins = self._kin_bins[reg_name_key]['ms']
-            rsbins = self._kin_bins[reg_name_key]['rs']
-            if 'ptisr' not in self._kin_bins[reg_name_key].keys():
-                ptisrbins = array('d',[0,3000])
-            else:
-                ptisrbins = self._kin_bins[reg_name_key]['ptisr']
-      
-        msmax = max(msbins) 
-        n_msbins = len(msbins) - 1
-        n_rsbins = len(rsbins) - 1
-        if ch_name == reg_name or reg_name == "MsCR" or val:
-            highptcut = "200"
-            vhighptcut = "500"
-            df = df.Define("isoScoreHighPt",f"baseLinePhoton_isoANNScore[baseLinePhoton_Pt >= {highptcut} && baseLinePhoton_Pt < {vhighptcut}]").Define("isoScoreLowPt",f"baseLinePhoton_isoANNScore[baseLinePhoton_Pt < {highptcut}]").Define("isoScoreVeryHighPt",f"baseLinePhoton_isoANNScore[baseLinePhoton_Pt >= {vhighptcut}]")
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonBeamHaloScore_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonBeamHaloScore_{proc_name}", 80, -0.07, 1.07),
-                    "baseLinePhoton_beamHaloCNNScore"
-                )
-            )
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonIsoScore_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
-                    "baseLinePhoton_isoANNScore"
-                )
-            )
-            df = df.Define("baseLinePhoton_isoANNScore_NotBHTagged","baseLinePhoton_isoANNScore[baseLinePhoton_beamHaloCNNScore < 0.185]")
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonIsoScoreNotBHTagged_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonIsoScoreNotBHTagged_{proc_name}", 80, 0.15, 1.07),
-                    "baseLinePhoton_isoANNScore_NotBHTagged"
-                )
-            )
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonIsoScoreHightPt_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
-                    "isoScoreHighPt"
-                )
-            )
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonIsoScoreVeryHightPt_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
-                    "isoScoreVeryHighPt"
-                )
-            )
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonIsoScoreLowtPt_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
-                    "isoScoreLowPt"
-                )
-            )
+    def kinbin_cutstring_to_histbins(self, kinbins):
+        binidxs = []
+        xbins = set()
+        ybins = set()
+        pattern = r"[<>=!]=?"
+        for binname, kbin in kinbins.items():
+            binidxs.append(binname[-2:])
+            bins = kbin.split(" && ")
+            for bbin in bins:
+                matchidx = [(match.start(),match.group()) for match in re.finditer(pattern, bbin)][0]
+                val = float(bbin[matchidx[0]+len(matchidx[1]):].strip(")"))
+                if "Ms" in bbin:
+                    xbins.add(val)
+                if "Rs" in bbin:
+                    ybins.add(val)
+        xbins.add(10000)
+        ybins.add(1)
+        xbins = np.array(list(xbins))
+        xbins.sort()
+        ybins = np.array(list(ybins))
+        ybins.sort()
+        return xbins, ybins
 
-            df = df.Define("baseLinePhoton_isoANNScoreGen22","baseLinePhoton_isoANNScore[baseLinePhoton_SusyId == 22]")
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonIsoScoreGen22_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonIsoScoreGen22_{proc_name}", 80, 0.15, 1.07),
-                    "baseLinePhoton_isoANNScoreGen22"
-                )
+
+    def do_photon_hists(self, df, proc_name, reg_name, h1d, h2d, mc = False):
+        highptcut = "200"
+        vhighptcut = "500"
+        df = df.Define("isoScoreHighPt",f"baseLinePhoton_isoANNScore[baseLinePhoton_Pt >= {highptcut} && baseLinePhoton_Pt < {vhighptcut}]").Define("isoScoreLowPt",f"baseLinePhoton_isoANNScore[baseLinePhoton_Pt < {highptcut}]").Define("isoScoreVeryHighPt",f"baseLinePhoton_isoANNScore[baseLinePhoton_Pt >= {vhighptcut}]")
+        df = (df.Define("baseLinePhoton_beamHaloCNNScore_BHCR","baseLinePhoton_beamHaloCNNScore[baseLinePhoton_beamHaloCR == 1]")
+                .Define("baseLinePhoton_beamHaloCNNScore_GJetsCR","baseLinePhoton_beamHaloCNNScore[baseLinePhoton_GJetsCR == 1]")
+                .Define("baseLinePhoton_beamHaloCNNScore_DiJetsCR","baseLinePhoton_beamHaloCNNScore[baseLinePhoton_DiJetsCR == 1]")
+                .Define("baseLinePhoton_isoANNScore_GJetsCR","baseLinePhoton_isoANNScore[baseLinePhoton_GJetsCR == 1]")
+                .Define("baseLinePhoton_isoANNScore_DiJetsCR","baseLinePhoton_isoANNScore[baseLinePhoton_DiJetsCR == 1]")
+                .Define("notBeamHaloPhoton_isoANNScore","baseLinePhoton_isoANNScore[baseLinePhoton_beamHaloCNNScore < 0.185]")
             )
-            timesig_upperend = 20
-            if ch_name == "presel":
-                timesig_upperend = 2.
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonTimeSig_{proc_name}_{ch_name}_{reg_name}", "", 50, -20,timesig_upperend),
-                    "baseLinePhoton_WTimeSig"
-                )
-            )
-            df = df.Define("baseLinePhoton_notBHTimeSig","baseLinePhoton_WTimeSig[baseLinePhoton_beamHaloCNNScore < 0.185]")
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhoton_notBHTimeSig_{proc_name}_{ch_name}_{reg_name}", "", 50, -10,2.5),
-                    "baseLinePhoton_notBHTimeSig"
-                )
-            )
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonPt_{proc_name}_{ch_name}_{reg_name}", f"baseLinePhotonPt_{proc_name}", 50, 0, 1000),
-                    "baseLinePhoton_Pt"
-                )
-            )
-            h1d.append(
-                df.Histo1D(
-                    (f"nBaseLinePhotons_{proc_name}_{ch_name}_{reg_name}", "", 5,0,5),
-                    f"nBaseLinePhotons"
-                )
-            )
-            h1d.append(
-                df.Histo1D(
-                    (f"baseLinePhotonGenSusyId_{proc_name}_{ch_name}_{reg_name}", "", 60, -30,30),
-                    "baseLinePhoton_SusyId"
-                )
-            )
-            h2d.append(
-                df.Histo2D(
-                 (f"isoScoreBHScore_{proc_name}_{ch_name}_{reg_name}", ";isoScore;bhScore",
-                     50, 0, 1.01, 50, 0, 1.01),
-                    "baseLinePhoton_isoANNScore", "baseLinePhoton_beamHaloCNNScore"
-                )
-            )
-            df = df.Define("delayedIsoScore","baseLinePhoton_isoANNScore[baseLinePhoton_WTimeSig > 2.5]").Define("delayedBHScore","baseLinePhoton_beamHaloCNNScore[baseLinePhoton_WTimeSig > 2.5]")
-            h2d.append(
-                df.Histo2D(
-                 (f"delayedIsoScoreBHScore_{proc_name}_{ch_name}_{reg_name}", ";isoScore;bhScore",
-                     50, 0, 1.01, 50, 0, 1.01),
-                    "delayedIsoScore", "delayedBHScore"
-                )
-            )
-         
-        h2d.append(
-            df.Histo2D(
-             (f"yields_{proc_name}_{ch_name}_{reg_name}", ";Ms;Rs",
-                 n_msbins, msbins, n_rsbins, rsbins),
-                "rjr_Ms0", "rjr_Rs0", "evtFillWgt"
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonBeamHaloScore_{proc_name}_{reg_name}", f"baseLinePhotonBeamHaloScore_{proc_name}", 80, -0.07, 1.07),
+                "baseLinePhoton_beamHaloCNNScore"
             )
         )
-      
         h2d.append(
             df.Histo2D(
-             (f"MsRs_{proc_name}_{ch_name}_{reg_name}", ";Ms;Rs",
-                 50, 0, 10000, 50, 0, 1),
-                "rjr_Ms0", "rjr_Rs0", "evtFillWgt"
+                (f"baseLinePhotonBeamHaloScore_baseLinePhotonIsoScore_{proc_name}_{reg_name}", f"baseLinePhotonBeamHaloScore_baseLinePhotonIsoScore_{proc_name};bhScore;isoScore", 80, -0.07, 0.2,80,0.15,1.07),
+                "baseLinePhoton_beamHaloCNNScore","baseLinePhoton_isoANNScore"
             )
         )
-        #compressed kinematics
+        df = df.Define("delayedIsoScore","baseLinePhoton_isoANNScore[baseLinePhoton_WTimeSig > 2.5]").Define("delayedBHScore","baseLinePhoton_beamHaloCNNScore[baseLinePhoton_WTimeSig > 2.5]")
         h2d.append(
-            df.Filter("rjrIsr_PtIsr != -1").Histo2D( #remove events with ill-defined ISR trees
-             (f"RISRPtISR_{proc_name}_{ch_name}_{reg_name}", ";RISR;ptISR",
-                 50, ptisrbins[0], ptisrbins[-1], 50, rsbins[0],rsbins[-1]+0.1 ),
-                "rjrIsr_PtIsr", "rjrIsr_RIsr", "evtFillWgt"
+            df.Histo2D(
+             (f"delayedIsoScoreBHScore_{proc_name}_{reg_name}", ";isoScore;bhScore",
+                 50, 0, 1.01, 50, 0, 0.2),
+                "delayedIsoScore", "delayedBHScore"
             )
-        )   
+        )
+        
+        
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonBeamHaloScoreBHCR_{proc_name}_{reg_name}", f"baseLinePhotonBeamHaloScoreBHCR_{proc_name}", 80, -0.07, 1.07),
+                "baseLinePhoton_beamHaloCNNScore_BHCR"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonBeamHaloScoreGJetsCR_{proc_name}_{reg_name}", f"baseLinePhotonBeamHaloScoreGJetsCR_{proc_name}", 80, -0.07, 1.07),
+                "baseLinePhoton_beamHaloCNNScore_GJetsCR"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonBeamHaloScoreDiJetsCR_{proc_name}_{reg_name}", f"baseLinePhotonBeamHaloScoreDiJetsCR_{proc_name}", 80, -0.07, 1.07),
+                "baseLinePhoton_beamHaloCNNScore_DiJetsCR"
+            )
+        )
 
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonIsoScore_{proc_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
+                "baseLinePhoton_isoANNScore"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"notBeamHaloPhotonIsoScore_{proc_name}_{reg_name}", f"notBeamHaloPhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
+                "notBeamHaloPhoton_isoANNScore"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonIsoScoreHightPt_{proc_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
+                "isoScoreHighPt"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonIsoScoreVeryHightPt_{proc_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
+                "isoScoreVeryHighPt"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonIsoScoreLowtPt_{proc_name}_{reg_name}", f"baseLinePhotonIsoScore_{proc_name}", 80, 0.15, 1.07),
+                "isoScoreLowPt"
+            )
+        )
+        
+
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonPt_{proc_name}_{reg_name}", f"baseLinePhotonPt_{proc_name}", 50, 0, 1000),
+                "baseLinePhoton_Pt"
+            )
+        )
+       
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonEnergy_{proc_name}_{reg_name}", f"baseLinePhotonEnergy_{proc_name}", 50, 0, 1000),
+                "baseLinePhoton_Energy"
+            )
+        )
+    
+        df = (df.Define("beamHaloPhoton_Energy","baseLinePhoton_Energy[baseLinePhoton_beamHaloCNNScore >= 0.917252]")
+            )
+
+ 
+        h1d.append(
+            df.Histo1D(
+                (f"beamHaloPhotonEnergy_{proc_name}_{reg_name}", f"beamHaloPhotonEnergy_{proc_name}", 50, 0, 1000),
+                "beamHaloPhoton_Energy"
+            )
+        )
+
+        timesig_upperend = 10
+        if reg_name == "presel" and not mc:
+            timesig_upperend = 2.
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonTimeSig_{proc_name}_{reg_name}", "", 50, -10,timesig_upperend),
+                "baseLinePhoton_WTimeSig"
+            )
+        )
+        df = (df.Define("baseLinePhoton_notBHTimeSig","baseLinePhoton_WTimeSig[baseLinePhoton_beamHaloCNNScore < 0.185]")
+                .Define("baseLinePhoton_NPIsoTimeSig","baseLinePhoton_WTimeSig[baseLinePhoton_isoANNScore > 0.9]")
+                .Define("baseLinePhoton_NPIsoNotBHTimeSig","baseLinePhoton_WTimeSig[((baseLinePhoton_isoANNScore > 0.9) && (baseLinePhoton_beamHaloCNNScore < 0.185))]")
+            )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonNotBHTimeSig_{proc_name}_{reg_name}", "", 50, -10,timesig_upperend),
+                "baseLinePhoton_notBHTimeSig"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonNPIsoTimeSig_{proc_name}_{reg_name}", "", 50, -10,timesig_upperend),
+                "baseLinePhoton_NPIsoTimeSig"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"baseLinePhotonNPIsoNotBHTimeSig_{proc_name}_{reg_name}", "", 50, -10,timesig_upperend),
+                "baseLinePhoton_notBHTimeSig"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"nBaseLinePhotons_{proc_name}_{reg_name}", "", 5,0,5),
+                f"nBaseLinePhotons"
+            )
+        )
+        return h1d, h2d
+
+    def do_jet_hists(self, df, proc_name, reg_name, h1d, h2d):
+        centralid = "(selJetNeEmEF < 0.9) && (selJetChEmEF < 0.8)"
+        df = df.Define("centralIDJetEnergy",f"selJetEnergy[{centralid}]") 
+        h1d.append(
+            df.Histo1D(
+                (f"baseLineJetEnergy_{proc_name}_{reg_name}", f"baseLineJetEnergy_{proc_name}_{reg_name}", 50, 0., 3e3),
+                "selJetEnergy"
+            )
+        )
+        h1d.append(
+            df.Histo1D(
+                (f"CentralIDJetEnergy_{proc_name}_{reg_name}", f"CentralIDJetEnergy_{proc_name}_{reg_name}", 50, 0., 3e3),
+                "centralIDJetEnergy"
+            )
+        )
+        return h1d, h2d
+
+        
+
+    def do_rjr_hists(self, df, proc_name, reg_name, h1d, h2d): 
         #do Ms cut on Rs    
         h1d.append(
             df.Filter("rjr_Ms0 > 2000").Histo1D(
-               (f"Rs_{proc_name}_{ch_name}_{reg_name}", "", 25, rsbins[0], rsbins[-1]+0.01),
+               (f"Rs_{proc_name}_{reg_name}", "", 25, 0.15, 1.01),
                 "rjr_Rs0", "evtFillWgt"
             )
         )
-   
         #do Rs cut on Ms    
         h1d.append(
             df.Filter("rjr_Rs0 > 0.15").Histo1D(
-               (f"Ms_{proc_name}_{ch_name}_{reg_name}", "", 25, msbins[0], msbins[-1]),
+               (f"Ms_{proc_name}_{reg_name}", "", 25, 2000, 5000),
                 "rjr_Ms0", "evtFillWgt"
             )
         )
-   
+        return h1d, h2d
+
+    def fill_region_hists(self, df, proc_name, reg_name, h1d, h2d, val = False, unblind = False, mc = False):
+        if "failSel" in reg_name:
+            return
+        if not unblind and "MET" in proc_name and "SR" in reg_name:
+            return
+        h1d, h2d = self.do_photon_hists(df, proc_name, reg_name, h1d, h2d, mc)
+        h1d, h2d = self.do_jet_hists(df, proc_name, reg_name, h1d, h2d)
+        h1d, h2d = self.do_rjr_hists(df, proc_name, reg_name, h1d, h2d)
 
     
 
@@ -1299,8 +1357,8 @@ class RJRAnalysis:
                 #print("  doing region", reg_name)
                 #define columns with lowest Rs/Ms cuts
                 self.fill_region_hists(
-                    df_reg, procstr, reg_name, ch_name,
-                    hists1d, hists2d, args.val, args.unblind
+                    df_reg, procstr, reg_name, 
+                    hists1d, hists2d, args.val, args.unblind, mc
                 )
                 df_list.append(df_reg)
             report = df00.Report() 
