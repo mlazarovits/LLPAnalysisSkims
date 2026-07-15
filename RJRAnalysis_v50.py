@@ -393,7 +393,7 @@ class RJRAnalysis:
             int getRegionIdx(const int nSVHad, const RVecF& SVHadDxySig, const RVecF& SVHadMass, const int nSVLep, const RVecF& SVLepDxySig, const int nPhotons, const RVecF& timesigs, const RVecF& bh_scores, const RVecF& iso_scores, const RVecF& photon_eta, const RVecF& photon_pt, const RVecI& nRJRJetsA, const RVecI& nRJRJetsB){
                 double st_bhearly = -3;
                 double st_isoearly = -2.5;
-                double noniso_cutoff = 0.95; //>= is iso, < is noniso
+                double noniso_cutoff = 0.7; //>= is iso, < is noniso
 
                 if(nSVLep > 0){
                     if(SVLepDxySig[0] < 800)
@@ -929,7 +929,7 @@ class RJRAnalysis:
         )
         h2d.append(
             df.Histo2D(
-                (f"baseLinePhotonBeamHaloScore_baseLinePhotonIsoScore_{proc_name}_{reg_name}", f"baseLinePhotonBeamHaloScore_baseLinePhotonIsoScore_{proc_name};bhScore;isoScore", 80, -0.07, 0.2,80,0.15,1.07),
+                (f"baseLinePhotonBeamHaloScoreIsoScore_{proc_name}_{reg_name}", f"baseLinePhotonBeamHaloScore_baseLinePhotonIsoScore_{proc_name};bhScore;isoScore", 80, -0.07, 0.2,80,0.15,1.07),
                 "baseLinePhoton_beamHaloCNNScore","baseLinePhoton_isoANNScore"
             )
         )
@@ -1047,7 +1047,7 @@ class RJRAnalysis:
         h1d.append(
             df.Histo1D(
                 (f"baseLinePhotonNPIsoNotBHTimeSig_{proc_name}_{reg_name}", "", 50, -10,timesig_upperend),
-                "baseLinePhoton_notBHTimeSig"
+                "baseLinePhoton_NPIsoNotBHTimeSig"
             )
         )
         h1d.append(
@@ -1090,6 +1090,12 @@ class RJRAnalysis:
             df.Filter("rjr_Rs0 > 0.15").Histo1D(
                (f"Ms_{proc_name}_{reg_name}", "", 25, 2000, 5000),
                 "rjr_Ms0", "evtFillWgt"
+            )
+        )
+        h2d.append(
+            df.Histo2D(
+                (f"MsRs_{proc_name}_{reg_name}", f"MsRs_{proc_name};bhScore;isoScore", 40, 0., 5000,40,0.,1.07),
+                "rjr_Ms0","rjr_Rs0","evtFillWgt"
             )
         )
         return h1d, h2d
@@ -1148,9 +1154,9 @@ class RJRAnalysis:
                     #else: #bkg MC for 2018 only rn
                     #    lumi_factor = args.lumi / 67.9
                 else:
-                    lumi_factor = 1   
+                    lumi_factor = 1. 
                 print(proc,"lumi",lumi_factor) 
-                df1 = df1.Redefine("evtFillWgt",f"evtFillWgt*{lumi_factor}")
+                df1 = df1.Redefine("evtFillWgt",f"(float)evtFillWgt*{lumi_factor}")
     
                 #do individual presel cuts here so they are printed out
                 df_metcut = df1.Filter(self._metcut,self._metcut)
@@ -1320,7 +1326,7 @@ class RJRAnalysis:
             )
             if(mc):
                 lumi_factor = args.lumi 
-                df1 = df1.Redefine("evtFillWgt",f"evtFillWgt*{lumi_factor}")
+                df1 = df1.Redefine("evtFillWgt",f"(float)(evtFillWgt*{lumi_factor})")
             if "SMS" in proc and ctaupair[1] != ctaupair[0]:
                 tau_old = self.ProcessCtauStr(ctaupair[0])
                 tau_new = self.ProcessCtauStr(ctaupair[1])
