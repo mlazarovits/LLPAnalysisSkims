@@ -134,7 +134,7 @@ class RJRAnalysis:
             int getRegionIdxValidation(const int nSVHad, const RVecF& SVHadDxySig, const RVecF& SVHadMass, const int nSVLep, const RVecF& SVLepDxySig, const int nPhotons, const RVecF& timesigs, const RVecF& bh_scores, const RVecF& iso_scores, const RVecF& photon_eta, const RVecF& photon_pt, const RVecI& nRJRJetsA, const RVecI& nRJRJetsB){
                 double st_bhearly = -3;
                 double st_isoearly = -2.5;
-                double noniso_cutoff = 0.9; //>= is iso, < is noniso
+                double noniso_cutoff_sr = 0.7; //>= is iso, < is noniso
 
                 if(nSVLep > 0){
                     if(SVLepDxySig[0] < 50)
@@ -227,8 +227,8 @@ class RJRAnalysis:
                                 }
                             }
                             else{ //no bh regions
-                                if(Any(((bh_scores < 0.95) && (bh_scores >= 0.917252)) && ((iso_scores >= 0.5) && (iso_scores < 0.9)))){ //!bh+tight regions
-                                    auto mask = ( ((bh_scores < 0.95) && (bh_scores >= 0.917252)) && ((iso_scores >= 0.5) && (iso_scores < 0.9)));
+                                if(Any(((bh_scores < 0.95) && (bh_scores >= 0.917252)) && ((iso_scores >= 0.3) && (iso_scores < noniso_cutoff_sr)))){ //!bh+tight regions
+                                    auto mask = ( ((bh_scores < 0.95) && (bh_scores >= 0.917252)) && ((iso_scores >= 0.3) && (iso_scores < noniso_cutoff_sr)));
                                     auto notbh_timesigs = timesigs[mask];
                                     
                                     auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_isoearly) || notbh_timesigs >= 2.5][0];
@@ -246,8 +246,8 @@ class RJRAnalysis:
                                     }
                                 }
                                 else{ //np noniso regions
-                                    if(Any(iso_scores >= 0.4 && iso_scores < 0.5)){ //noniso np region
-                                        auto mask = iso_scores < 0.5 && iso_scores >= 0.4;
+                                	if(Any( (bh_scores < 0.185) && (iso_scores < 0.3))){ //mediso np region
+                                        auto mask = ((bh_scores < 0.185) && (iso_scores < 0.3));
                                         auto lead_idx = Nonzero(mask)[0];
                                         
                                         auto lead_timesig = timesigs[lead_idx];
@@ -467,8 +467,8 @@ class RJRAnalysis:
                                 auto mask = ((bh_scores >= 0.917252) && (iso_scores >= noniso_cutoff));
                                 auto bh_timesigs = timesigs[mask];
                                 
-                                auto lead_timesig = bh_timesigs[bh_timesigs < st_bhearly || bh_timesigs >= 2.5][0];
-                                if(lead_timesig < st_bhearly){ //early bh cr
+                                auto lead_timesig = bh_timesigs[(bh_timesigs < -2.5) || (bh_timesigs >= 2.5)][0];
+                                if((lead_timesig >= -10) && (lead_timesig < st_bhearly)){ //early bh cr
                                     return 5;
                                 }
                                 else if(lead_timesig >= 2.5) //late bh cr
@@ -481,7 +481,7 @@ class RJRAnalysis:
                                     auto mask = ((bh_scores < 0.185) && (iso_scores >= noniso_cutoff));
                                     auto notbh_timesigs = timesigs[mask];
                                     
-                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs >= -10 && notbh_timesigs < st_isoearly) || notbh_timesigs >= 2.5][0];
+                                    auto lead_timesig = notbh_timesigs[(notbh_timesigs < -2.5) || notbh_timesigs >= 2.5][0];
                                     if(lead_timesig < st_bhearly && lead_timesig >= -10){ //early !bh cr
                                         return 7;
                                     }
@@ -497,10 +497,8 @@ class RJRAnalysis:
                                 }
                                 else{
                                 	if(Any( (bh_scores < 0.185) && (iso_scores < noniso_cutoff && iso_scores >= 0.4))){ //mediso np region
-                                	    auto mask = ((iso_scores < noniso_cutoff && iso_scores >= 0.4) && (bh_scores < 0.185));
-                                	    auto lead_idx = Nonzero(mask)[0];
-                                	    
-                                	    auto lead_timesig = timesigs[lead_idx];
+                                	    auto mask = ((iso_scores < noniso_cutoff && iso_scores >= 0.4) && (bh_scores < 0.185) && ((timesigs < -2.5) || (timesigs >= 2.5)) );
+                                        auto lead_timesig = timesigs[mask][0]; //returns exactly 0 if none found
                                 	    if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early mediso cr
                                 	        return 15;
                                 	    else if(lead_timesig >= 2.5) //late noniso cr
@@ -1307,6 +1305,8 @@ class RJRAnalysis:
                 else:
                     ofilename += "_"+procstr
             print("Doing process",procstr)
+            if compressed:
+                print("is compressed")
             
             mc = True
             if "MET" in proc:
@@ -1383,6 +1383,13 @@ class RJRAnalysis:
                 regions[region] = (regions[region]
                     .Define("eta","baseLinePhoton_Eta").Define("iso_score","baseLinePhoton_isoANNScore").Define("bh_score","baseLinePhoton_beamHaloCNNScore")
                     .Define("pt","baseLinePhoton_Pt").Define("tsig","baseLinePhoton_WTimeSig")
+                    .Define("yamlch5","((SV_nHadronic==0) && (SV_nLeptonic==0)) && passNPhoGe1SelectionEarlyBeamHaloCR")
+                    .Define("yamlch6","((SV_nHadronic==0) && (SV_nLeptonic==0)) && passNPhoGe1SelectionLateBeamHaloCR")
+                    .Define("yamlch7","((SV_nHadronic==0) && (SV_nLeptonic==0)) && passNPhoGe1SelectionEarlyNotBHCR")
+                    .Define("yamlch15","((SV_nHadronic==0) && (SV_nLeptonic==0)) && passNPhoGe1SelectionEarlyMedIsoCR")
+                    .Define("yamlch16","((SV_nHadronic==0) && (SV_nLeptonic==0)) && passNPhoGe1SelectionLateMedIsoCR")
+                    .Define("yamlch17","((SV_nHadronic==0) && (SV_nLeptonic==0)) && passNPhoGe1SelectionEarlyTightIsoCR")
+                    .Define("yamlch8","((SV_nHadronic==0) && (SV_nLeptonic==0))  && passNPhoGe1SelectionLateNotBHTightIsoSR")
                     #.Define("pholatesig","passNPhoGe1SelectionLateSignal")
                     #.Define("earlytight","passNPhoGe1SelectionEarlyTightIsoCR")
                     #.Define("earlytight0","passNPhoGe1SelectionEarlyTightIso0NotBHCR")
@@ -1390,11 +1397,15 @@ class RJRAnalysis:
                     #.Define("latemed0","passNPhoGe1SelectionLateMedIso0NotBHCR")
                     #.Define("npmediso_tsig","npmediso_tagged_lead_timesig")
                 )
-                chnum = "8"
-                dispcols = ["tsig","iso_score","bh_score"]
+                chnums = [5,6,7,8,15,16,17]
+                dispcols = ["tsig","iso_score","bh_score","bh_tagged_lead_timesig","nptightisonotbh_tagged_lead_timesig"]
                 if not args.yaml:
                     dispcols.append("regionIdx")
-                    regions[region].Filter(f"(nBaseLinePhotons == 2) && (regionIdx == {chnum}) && (bh_score[1] < 0.185 && iso_score[1] <= 0.9)").Display(dispcols,20).Print()
+                    for chnum in chnums:
+                        print(f"events not in ifelse in yamlch{chnum}",regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Count().GetValue()) 
+                        regions[region].Filter(f"(yamlch{chnum}) && (regionIdx != {chnum})").Display(dispcols,20).Print()
+                        print(f"events in ifelse not in yamlch{chnum}",regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Count().GetValue()) 
+                        regions[region].Filter(f"!yamlch{chnum} && (regionIdx == {chnum})").Display(dispcols,20).Print()
         #process loop end
     
         if procstr == "":
