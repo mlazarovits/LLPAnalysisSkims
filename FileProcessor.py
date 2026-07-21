@@ -11,45 +11,119 @@ class FileProcessor():
                 path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2250_mN1-2200_ct0p1_FASTSIMAOD_rjrskim.root",
                 path+"SMS_SVIPM100_v33_gogoGZ_AODSIM_mGl-2300_mN2-2200_mN1-2100_ct0p5_FASTSIMAOD_rjrskim.root",
         ]
-        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v49/"
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v50/"
         
         self._procFiles["SMS_gogoGZ"] = [
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-2250_mN1-2150_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2100_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2150_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-1600_mN1-500_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-1300_mN1-1000_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2350_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2400_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2300_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2350_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2000_mN1-1000_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2000_mN1-1500_ct0p5_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-1300_mN1-1000_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-1600_mN1-1000_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-1600_mN1-500_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2100_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2150_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-2250_mN1-2150_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2300_mN2-2250_mN1-2200_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2000_mN1-1500_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2300_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2350_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2350_ct0p1_rjrskim.root",
-            path+"SMS_SVHPM100_v34_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2400_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2250_mN1-2200_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2250_mN1-2150_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2100_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2150_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-1600_mN1-500_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-1300_mN1-1000_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v36_gogoGZ_FULLMINI_mGl-2300_mN2-1300_mN1-1000_ct-3p0_rjrskim.root",
+            path+"SMS_SVHPM100_v36_gogoGZ_FULLMINI_mGl-2300_mN2-1300_mN1-1000_ct-0p01_rjrskim.root",
+            path+"SMS_SVHPM100_v36_gogoGZ_FULLMINI_mGl-2300_mN2-1300_mN1-1000_ct-0p001_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-1200_mN1-500_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2350_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2400_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2300_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2350_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2000_mN1-1000_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2000_mN1-1500_ct0p5_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-1300_mN1-1000_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-1600_mN1-1000_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-1600_mN1-500_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2100_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2200_mN1-2150_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2250_mN1-2150_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2300_mN2-2250_mN1-2200_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-1200_mN1-500_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2000_mN1-1500_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2300_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2400_mN1-2350_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2350_ct0p1_rjrskim.root",
+            path+"SMS_SVHPM100_v34p1_gogoGZ_FULLMINI_mGl-2500_mN2-2450_mN1-2400_ct0p1_rjrskim.root",
         ]
-        self._procFiles["GJets"] = [
-            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-40To100_RunIISummer20UL18_rjrskim.root",
-            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-100To200_RunIISummer20UL18_rjrskim.root",
-            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-200To400_RunIISummer20UL18_rjrskim.root",
-            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-400To600_RunIISummer20UL18_rjrskim.root",
-            path+"GJets_R18_SVHPM100_MiniAOD_v34_GJets_HT-600ToInf_RunIISummer20UL18_rjrskim.root",
-            #path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_M40_80-sherpa_rjrskim.root",
-            #path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-0to40_rjrskim.root",
-            #path+"DiPJBox_R18_SVIPM100_v31_DiPhotonJetsBox_MGG-80toInf_rjrskim.root"
+        #path = "root://cmseos.fnal.gov//store/user/malazaro/LLPSkims/skims_v50/"
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v49/"
+        self._procFiles["METPD16"] = [
+            path+"MET_R16_SVHPM100_MiniAOD_v34_MET_Run2016B-ver2_HIPM_UL2016_rjrskim.root",
+            path+"MET_R16_SVHPM100_MiniAOD_v34_MET_Run2016C-HIPM_UL2016_rjrskim.root",
+            path+"MET_R16_SVHPM100_MiniAOD_v34_MET_Run2016D-HIPM_UL2016_rjrskim.root",
+            path+"MET_R16_SVHPM100_MiniAOD_v34_MET_Run2016E-HIPM_UL2016_rjrskim.root",
+            path+"MET_R16_SVHPM100_MiniAOD_v34_MET_Run2016F-HIPM_UL2016_rjrskim.root"
+        ]
+        
+        self._procFiles["METPD17"] = [
+            path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017B_rjrskim.root",
+            path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017C_rjrskim.root",
+            path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017D_rjrskim.root",
+            path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017E_rjrskim.root",
+            path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017F_rjrskim.root",
+        ]
+        
+        path = "root://cmseos.fnal.gov//store/user/malazaro/LLPSkims/skims_v50p1/"
+        self._procFiles["METPD18"] = [
+            path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018A_rjrskim_v50p1.root",
+            path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018B_rjrskim_v50p1.root",
+            path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018C_rjrskim_v50p1.root",
+            path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018D_rjrskim_v50p1.root",
+            #path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018A_rjrskim_partial.root",
+            #path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018B_rjrskim.root",
+            #path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018C_rjrskim.root",
+            #path+"MET_R18_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2018D_rjrskim.root",
+        ]
+        
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v49/"
+        self._procFiles["METPD22"] = [
+            path+"JetMET_R22_SVHPM100_MiniAOD_v34_JetMET_MINIAOD_Run2022C-19Dec2023-v1_rjrskim.root",
+            path+"JetMET_R22_SVHPM100_MiniAOD_v34_JetMET_MINIAOD_Run2022D-19Dec2023-v1_rjrskim.root",
+            path+"JetMET_R22_SVHPM100_MiniAOD_v34_JetMET_MINIAOD_Run2022E-19Dec2023-v1_rjrskim.root",
+            path+"JetMET_R22_SVHPM100_MiniAOD_v34_JetMET_MINIAOD_Run2022F-19Dec2023-v2_rjrskim.root",
+            path+"JetMET_R22_SVHPM100_MiniAOD_v34_JetMET_MINIAOD_Run2022G-19Dec2023-v1_rjrskim.root"
         ]
 
+        self._procFiles["METPD23"] = [ path+"JetMET_R23_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2023B-19Dec2023-v1_rjrskim.root",
+                                path+"JetMET_R23_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2023C-19Dec2023-v1_rjrskim.root",
+                                path+"JetMET_R23_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2023D-19Dec2023-v1_rjrskim.root",
+                                path+"JetMET_R23_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2023B-19Dec2023-v1_rjrskim.root",
+                                path+"JetMET_R23_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2023C-19Dec2023-v1_rjrskim.root",
+                                path+"JetMET_R23_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2023D-19Dec2023-v1_rjrskim.root"]
         
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v50/"
+        self._procFiles["METPD24"] = [ path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024C-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024D-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024E-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024E-PromptReco-v2_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024F-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024G-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024H-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024I-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET0_MINIAOD_Run2024I-PromptReco-v2_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024C-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024D-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024E-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024E-PromptReco-v2_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024F-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024G-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024H-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024I-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R24_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2024I-PromptReco-v2_rjrskim.root",
+                        ]
+        self._procFiles["METPD25"] = [ path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2025D-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2025E-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2025F-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2025F-PromptReco-v2_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET1_MINIAOD_Run2025G-PromptReco-v1_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_JetMET0_MINIAOD_Run2025C_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_JetMET0_MINIAOD_Run2025E_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_JetMET0_MINIAOD_Run2025F_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_JetMET0_v2_MINIAOD_Run2025C_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_JetMET0_v2_MINIAOD_Run2025F_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_JetMET1_MINIAOD_Run2025C_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_JetMET1_v2_MINIAOD_Run2025C_rjrskim.root",
+                                path+"JetMET_R25_SVHPM100_MiniAOD_v34_JetMET_R25_SVHPM100_v34_recovery_JetMET0_MINIAOD_Run2025G_rjrskim.root",
+                    ]
         
         path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v47_mini_testIsoPresel/"
         self._procFiles["SMS_test_prompt"] = [
@@ -84,78 +158,62 @@ class FileProcessor():
             path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-500_mN1-1_ct0p1_rjrskim.root",
             path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2000_mN2-500_mN1-250_ct0p1_rjrskim.root",
             path+"SMS_SVIPM100_v31_gogoG_AODSIM_mGl-2500_mN2-1500_mN1-1000_ct0p1_rjrskim.root",
-	]
+    ]
         
-        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v46/"
+        path = "root://cmseos.fnal.gov//store/user/lpcsusylep/malazaro/KUCMSSkims/skims_v50/"
+        self._procFiles["GJets"] = [
+        path+"GJets_R18_SVHPM100_MiniAOD_v2_v34_GJets_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+        path+"GJets_R18_SVHPM100_MiniAOD_v2_v34_GJets_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+        path+"GJets_R18_SVHPM100_MiniAOD_v2_v34_GJets_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+        path+"GJets_R18_SVHPM100_MiniAOD_v2_v34_GJets_HT-40To100_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+        path+"GJets_R18_SVHPM100_MiniAOD_v2_v34_GJets_HT-600ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+        ]
         self._procFiles["WJets"] = [
-        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-100To200_rjrskim.root",
-        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-1200To2500_rjrskim.root",
-        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-200To400_rjrskim.root",
-        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-2500ToInf_rjrskim.root",
-        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-400To600_rjrskim.root",
-        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-600To800_rjrskim.root",
-        	path+"WJets_R18_SVIPM100_v31_WJetsToLNu_HT-800To1200_rjrskim.root"
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"WJets_R18_SVIPM100_MiniAOD_v34_WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
         ]
         
         self._procFiles["ZJets"] = [
-        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-100To200_rjrskim.root",
-        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-1200To2500_rjrskim.root",
-        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-200To400_rjrskim.root",
-        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-2500ToInf_rjrskim.root",
-        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-400To600_rjrskim.root",
-        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-600To800_rjrskim.root",
-        	path+"ZJets_R18_SVIPM100_v31_ZJetsToNuNu_HT-800To1200_rjrskim.root"
+            path+"ZJets_R18_SVIPM100_MiniAOD_v34_ZJetsToNuNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"ZJets_R18_SVIPM100_MiniAOD_v34_ZJetsToNuNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"ZJets_R18_SVIPM100_MiniAOD_v34_ZJetsToNuNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"ZJets_R18_SVIPM100_MiniAOD_v34_ZJetsToNuNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"ZJets_R18_SVIPM100_MiniAOD_v34_ZJetsToNuNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"ZJets_R18_SVIPM100_MiniAOD_v34_ZJetsToNuNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"ZJets_R18_SVIPM100_MiniAOD_v34_ZJetsToNuNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
         ]
         
-        self._procFiles["TTXJets"] = [
-        	path+"TTXJets_R18_SVIPM100_v31_TGJets_rjrskim.root",
-        	path+"TTXJets_R18_SVIPM100_v31_TTGJets_rjrskim.root",
-        	path+"TTXJets_R18_SVIPM100_v31_TTJets_rjrskim.root",
-        	path+"TTXJets_R18_SVIPM100_v31_ttWJets_rjrskim.root",
-        	path+"TTXJets_R18_SVIPM100_v31_ttZJets_rjrskim.root"
+        self._procFiles["TTJets"] = [
+            path+"TTJets_R18_SVIPM100_MiniAOD_v34_TTJets_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
         ]
+        #self._procFiles["TTXJets"] = [
+        #    path+"TTXJets_R18_SVIPM100_v34_TGJets_rjrskim.root",
+        #    path+"TTXJets_R18_SVIPM100_v34_TTGJets_rjrskim.root",
+        #    path+"TTXJets_R18_SVIPM100_v34_TTJets_rjrskim.root",
+        #    path+"TTXJets_R18_SVIPM100_v34_ttWJets_rjrskim.root",
+        #    path+"TTXJets_R18_SVIPM100_v34_ttZJets_rjrskim.root"
+        #]
         
-        self._procFiles["METPD16"] = [
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016B_rjrskim.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016C_rjrskim.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016D_rjrskim.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016G_rjrskim.root",
-            path+"MET_R16_SVIPM100_v31_MET_AOD_Run2016H_rjrskim.root",
-        ]
-        
-        self._procFiles["METPD17"] = [
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017A_rjrskim.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017B_rjrskim.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017C_rjrskim.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017D_rjrskim.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017E_rjrskim.root",
-            path+"MET_R17_SVIPM100_v31_MET_AOD_Run2017F_rjrskim.root",
-        ]
-        
-        self._procFiles["METPD18"] = [
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018A_rjrskim.root",
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim.root",
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018C_rjrskim.root",
-            path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018D_rjrskim.root",
-        ]
-
-        self._procFiles["METPD_test"] = [
-           path+"MET_R18_SVIPM100_v31_MET_AOD_Run2018B_rjrskim.root"
-        ]
         
         self._procFiles["QCD"] = [
-            path+"QCD_R18_SVIPM100_v31_QCD_HT1000to1500_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT100to200_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT1500to2000_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT2000toInf_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT200to300_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT300to500_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT500to700_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT50to100_rjrskim.root",
-            path+"QCD_R18_SVIPM100_v31_QCD_HT700to1000_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT1000to1500_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT100to200_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT1500to2000_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT2000toInf_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT200to300_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT300to500_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT500to700_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT50to100_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
+            path+"QCD_R18_SVIPM100_MiniAOD_v34_QCD_HT700to1000_TuneCP5_13TeV-madgraphMLM-pythia8_rjrskim.root",
         ]
         
-        self._procFiles["TotalBkg"] = self._procFiles["GJets"] + self._procFiles["QCD"] + self._procFiles["TTXJets"] + self._procFiles["WJets"] + self._procFiles["ZJets"]
+        self._procFiles["TotalBkg"] = self._procFiles["GJets"] + self._procFiles["QCD"] + self._procFiles["WJets"] + self._procFiles["ZJets"]
 
 
     def field(self, name, val):
@@ -166,6 +224,8 @@ class FileProcessor():
         if proc not in self._procFiles.keys() and "PD" not in proc:
             print("Process",proc,"does not have files set. Currently set samples are",self._procFiles.keys())
             exit()
+        if ctau is not None and ctau in ['0p001','0p01','3p0']:
+            ctau = "-"+ctau
 
         if "SMS" not in proc and "PD" not in proc:
             return self._procFiles[proc]
@@ -177,9 +237,9 @@ class FileProcessor():
                 #keys = [key in self._procFiles.keys() if proc in key]
                 ret_files = []
                 for key, val in self._procFiles.items():
-                	if proc not in key:
-                		continue
-                	ret_files += val
+                    if proc not in key:
+                        continue
+                    ret_files += val
                 return ret_files
 
         pattern = (
@@ -193,6 +253,3 @@ class FileProcessor():
             return [f for f in self._procFiles[proc] if regex.search(f)]
 
     
-
-
-
