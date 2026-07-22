@@ -57,7 +57,7 @@ class FileProcessor():
         self._procFiles["METPD17"] = [
             path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017B_rjrskim.root",
             path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017C_rjrskim.root",
-            path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017D_rjrskim.root",
+            path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017D_rjrskim_partial.root",
             path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017E_rjrskim.root",
             path+"MET_R17_SVHPM100_MiniAOD_v34_MET_MINIAOD_Run2017F_rjrskim.root",
         ]
