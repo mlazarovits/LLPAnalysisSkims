@@ -393,7 +393,8 @@ class RJRAnalysis:
             int getRegionIdx(const int nSVHad, const RVecF& SVHadDxySig, const RVecF& SVHadMass, const int nSVLep, const RVecF& SVLepDxySig, const int nPhotons, const RVecF& timesigs, const RVecF& bh_scores, const RVecF& iso_scores, const RVecF& photon_eta, const RVecF& photon_pt, const RVecI& nRJRJetsA, const RVecI& nRJRJetsB){
                 double st_bhearly = -3;
                 double st_isoearly = -2.5;
-                double noniso_cutoff = 0.7; //>= is iso, < is noniso
+                double noniso_cutoff = 0.5; //>= is iso, < is noniso
+                double noniso_lowend = 0.; //< is iso or noniso
 
                 if(nSVLep > 0){
                     if(SVLepDxySig[0] < 800)
@@ -496,8 +497,8 @@ class RJRAnalysis:
                                     }
                                 }
                                 else{
-                                	if(Any( (bh_scores < 0.185) && (iso_scores < noniso_cutoff && iso_scores >= 0.4))){ //mediso np region
-                                	    auto mask = ((iso_scores < noniso_cutoff && iso_scores >= 0.4) && (bh_scores < 0.185) && ((timesigs < -2.5) || (timesigs >= 2.5)) );
+                                	if(Any( (bh_scores < 0.185) && (iso_scores < noniso_cutoff && iso_scores >= noniso_lowend))){ //mediso np region
+                                	    auto mask = ((iso_scores < noniso_cutoff && iso_scores >= noniso_lowend) && (bh_scores < 0.185) && ((timesigs < -2.5) || (timesigs >= 2.5)) );
                                         auto lead_timesig = timesigs[mask][0]; //returns exactly 0 if none found
                                 	    if(lead_timesig >= st_bhearly && lead_timesig < st_isoearly) //early mediso cr
                                 	        return 15;
@@ -1548,3 +1549,4 @@ if __name__ == "__main__":
         args,
         ofilename_extra=args.ofilename_extra
     )
+    print("\a\a\a")
