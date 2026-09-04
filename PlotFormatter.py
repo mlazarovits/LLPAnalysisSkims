@@ -49,11 +49,28 @@ class PlotFormatHelper:
             "earlyPBCR_long" : "Early !Beam Halo CR",
             "latePBCR_long" : "Late !Beam Halo SR",
             "looseNotTightIsoCR" : "#gamma_{t0}^{CR, L!T iso}",
-            "tightIsoSR" : "#gamma_{t0}^{CR, tight iso}",
+            "tightIsoSR" : "#gamma_{t0}^{SR, tight iso}",
             "earlyBHCR" : "#gamma_{t-}^{CR, BH}",
             "lateBHCR" : "#gamma_{t+}^{CR, BH}",
             "earlyPBCR" : "#gamma_{t-}^{CR, !BH}",
             "latePBCR" : "#gamma_{t+}^{SR, !BH}",
+            "presel" : "presel",
+            "Ch1CRGeLep1" : "SV^{CR, Sxy-}_{lep}",
+            "Ch2SRGeLep1" : "SV^{SR, Sxy+}_{lep}",
+            "Ch3CRGeHad1" : "SV^{CR, Sxy-}_{had}",
+            "Ch4SRGeHad1" : "SV^{SR, Sxy+}_{had}",
+            "Ch5CRgeq1PhoBHEarly" : "#geq 1 #gamma^{CR, BH}_{t-}",
+            "Ch6CRgeq1PhoBHLate" : "#geq 1 #gamma^{CR, BH}_{t+}",
+            "Ch7CRgeq1PhoNotBHEarly" : "#geq 1 #gamma^{CR, !BH}_{t-}",
+            "Ch8SRgeq1PhoNotBHLate" : "#geq 1 #gamma^{SR, !BH}_{t+}",
+            "Ch9CReq1PhoMedIsoPrompt" : "1 #gamma^{CR, Med Iso}_{t0}",
+            "Ch10SReq1PhoTightIsoPrompt" : "1 #gamma^{SR, Tight Iso}_{t0}",
+            "Ch11CReq2PhoMedIsoPrompt" : "2 #gamma^{CR, Med Iso}_{t0}",
+            "Ch12SReq2PhoTightIsoPrompt" : "2 #gamma^{SR, Tight Iso}_{t0}",
+            "Ch13CRgeq1SVgeq1PhoBHEarly" : "#geq 1 SV_{had}, #geq 1 #gamma_{t-}^{CR, BH}",
+            "Ch14CRgeq1SVgeq1PhoBHLate" : "#geq 1 SV_{had}, #gamma_{t+}^{CR, BH}",
+            "Ch15CRgeq1SVgeq1PhoNotBHEarly" : "#geq 1 SV_{had}, #gamma_{t-}^{CR, !BH}",
+            "Ch16SRgeq1SVgeq1PhoNotBHLate" : "#geq 1 SV_{had}, #gamma_{t+}^{SR, !BH}",
         }
         self._sample_label_mapping = {
             'QCD': 'QCD multijets',
@@ -69,9 +86,11 @@ class PlotFormatHelper:
             'DiPJBox' : 'Di-photon + jets', #may need to combine with GJets
             "METPD" : "MET PD Run II",
             "METFullRunII" : "MET PD Run II",
+            "METFullRunIIRunIII2223" : "Data",
             "MET18" : "MET PD 2018",
             "MET17" : "MET PD 2017",
             "MET16" : "MET PD 2016",
+            "MET23" : "MET PD 2023",
         }
 
     def _get_background_color_index(self, inlabel):
@@ -108,7 +127,7 @@ class PlotFormatHelper:
                 print("labels",labels,"parsing not defined")
                 return inlabel
         else: #multi-channel, not defined
-            print("labels",labels,"parsing not defined")
+            #print("labels",labels,"parsing not defined")
             return labels
 
     def IndexHists(self): #call once
@@ -119,21 +138,45 @@ class PlotFormatHelper:
                 if not hasattr(obj, "to_numpy"):  # TH1 / TH2 check
                     continue
 
-                parts = name.split("_")
-                if len(parts) != 4:
-                    continue
 
-                observable, process, channel, region = parts
+                parts = name.split("_")
+                if len(parts) == 3:
+                    observable, process, region = parts
+                else:
+                    continue
                 #clean up string
                 region = region[:region.find(";")]
                 self._all_hists.add(name)
                 self._hist_index[("obs", observable)].add(name)
                 self._hist_index[("process", process)].add(name)
-                self._hist_index[("channel", channel)].add(name)
                 self._hist_index[("region", region)].add(name)
 
-    def GetHists(self, obs = None, process = None, channel = None, region = None, histtype = None):
-        if obs is None and process is None and channel is None and region is None:
+    def GetAllObs(self):
+        obses = []
+        for key in self._hist_index.keys():
+            if key[0] == 'obs':
+                obses.append(key[1])
+        return obses
+
+    def GetAllProcNames(self, procstring):
+        processes = set()
+
+        for name in self._all_hists:
+            # Split into observable, process, region
+            parts = name.split("_")
+
+            if len(parts) < 3:
+                continue
+
+            process = "_".join(parts[1:-1])
+
+            if procstring in process:
+                processes.add(process)
+
+        return sorted(processes)
+
+    def GetHists(self, obs = None, process = None, region = None, histtype = None):
+        if obs is None and process is None and region is None:
             print("Need to specify at least one of the following: obs, process, channel, region")
     
         selections = []
@@ -141,11 +184,8 @@ class PlotFormatHelper:
             selections.append(self._hist_index[("obs", obs)])
         if process is not None:
             selections.append(self._hist_index[("process", process)])
-        if channel is not None:
-            selections.append(self._hist_index[("channel", channel)])
         if region is not None:
             selections.append(self._hist_index[("region", region)])
-    
         names = (
             set.intersection(*selections)
             if selections else self._all_hists
@@ -153,8 +193,9 @@ class PlotFormatHelper:
         ret_hists = [self._file[name] for name in names if self._file[name].Integral() > 0]
         if histtype is not None:
             for hist in ret_hists:
-                name = hist.GetName()+"_"+histtype
-                hist.SetName(name)
+                if f"_{histtype}" not in hist.GetName():
+                    name = hist.GetName()+"_"+histtype
+                    hist.SetName(name)
         return ret_hists 
 
     
@@ -253,7 +294,7 @@ class PlotFormatHelper:
                 totalxbins.append([xlow, xhi])
             totalbins.append(([ylow, yhi], totalxbins))
         #create bin labels
-        print("totalbins",totalbins, len(totalbins)) 
+        #print("totalbins",totalbins, len(totalbins)) 
         
         nbins = nx*ny
         h1 = ROOT.TH1D(
@@ -288,8 +329,13 @@ class PlotFormatHelper:
         label = inlabels[0]
         histtype = label[label.rfind("_")+1:] #remove histogram type tag
         for label in inlabels:
-            print("label",label)
-            obs, proc, ch, reg, histtype_l = label.split("_")
+            #print("label",label)
+            parts = label.split("_")
+            if len(parts) > 4:
+                obs, proc, ch, reg, histtype_l = parts
+            else:
+                ch = None
+                obs, proc, reg, histtype_l = parts 
             if option is not None:
                 reg += "_"+option
             if histtype_l != histtype:
@@ -298,10 +344,11 @@ class PlotFormatHelper:
                 procs.add(proc)
             else:
                 procs.add(self._labels_dict[proc])
-            if ch not in self._labels_dict.keys():
-                chs.add(ch)
-            else:
-                chs.add(self._labels_dict[ch])
+            if ch is not None:
+                if ch not in self._labels_dict.keys():
+                    chs.add(ch)
+                else:
+                    chs.add(self._labels_dict[ch])
             if reg not in self._labels_dict.keys():
                 regs.add(reg)
             else:
@@ -324,9 +371,14 @@ class PlotFormatHelper:
             else: #len(l) == 0
                 continue
         #remove repeated instances of labels
-        group_label = np.unique(group_label).tolist() 
-        print("final_labels",final_labels,"group_label",group_label)
+        #group_label = np.unique(group_label).tolist() 
+        #print("final_labels",final_labels,"group_label",group_label)
         return final_labels, group_label
+
+
+region_dict = {
+    "METCR":"100 GeV < MET < 150 GeV"
+}
 
 class PlotFormatter():
     def __init__(self, helper, lumi = 138, com = 13, plot_format = ".png"):
@@ -339,35 +391,73 @@ class PlotFormatter():
         self._lumi = lumi
         self._com = com
         self._helper = helper
+        self._run = ""
      
     def SetLumi(self, lumi):
+        self._lumi = lumi
         self._styler.SetLumi(lumi) 
-
     
     def SetEnergy(self, com):
+        self._com = com
         self._styler.SetEnergy(com)
 
+    def SetRun(self, run):
+        self._run = run
+        self._styler.SetRun(run)
+
     def format_2d_hist(self, name, hist, sample_label, x_label, x_min, x_max, y_label, y_min, y_max, normalize = False, globallabel = "", sample_label_x_pos = 0.65):
+        #self._styler.set_style()
+        CMS.SetLumi(self._lumi, run = self._run)
+        CMS.SetEnergy(self._com)
         canvas = CMS.cmsCanvas(name, x_min, x_max, y_min, y_max, x_label, y_label, 
                               square=False, extraSpace=0.01, iPos=0, with_z_axis=True)
         axis_labels = {}
         axis_labels['x'] = x_label
         axis_labels['y'] = y_label
         final_state_label = ""
-        print("sample_label",sample_label)
+        #print("sample_label",sample_label)
         prelim_str = "Preliminary"
         if sample_label not in self._helper._labels_dict.values():
             if "SMS" in sample_label:
                 sample_label = get_signal_label(sample_label)
                 sample_label_x_pos = 0.32
-                prelim_str = "Preliminary Simulation"
+                if "MET" not in sample_label:
+                    prelim_str = "Preliminary Simulation"
             else:
                 if sample_label in self._helper._sample_label_mapping.keys():
                     sample_label = self._helper._sample_label_mapping[sample_label]
                 prelim_str = "Preliminary"
+        #print("prelim_str",prelim_str,"sample",sample_label)
         if globallabel != "":
             final_state_label = self._helper.transform_to_final_state(globallabel)
-        self._plotter2D.plot_2d_baseFormat(hist, canvas, axis_labels, sample_label, final_state_label, sample_label_x_pos=sample_label_x_pos,normalize=normalize,prelim_str = prelim_str)
+        canvas.Draw()
+        canvas.cd()
+        canvas.SetLogz()
+        hist.GetZaxis().SetTitle("Events")
+        hist.GetZaxis().CenterTitle(True)
+        hist.GetZaxis().SetTitleSize(0.04)
+        hist.GetZaxis().SetLabelSize(0.04)
+        hist.Draw("samecolz")
+        CMS.GetCmsCanvasHist(canvas).GetXaxis().SetLabelSize(0.04)
+        CMS.GetCmsCanvasHist(canvas).GetYaxis().SetLabelSize(0.04)
+        CMS.GetCmsCanvasHist(canvas).GetXaxis().SetTitleSize(0.04)
+        CMS.GetCmsCanvasHist(canvas).GetYaxis().SetTitleSize(0.04)
+        CMS.GetCmsCanvasHist(canvas).GetXaxis().CenterTitle(True)
+        CMS.GetCmsCanvasHist(canvas).GetYaxis().CenterTitle(True)
+        CMS.GetCmsCanvasHist(canvas).GetYaxis().SetTitleOffset(1.05)
+        CMS.GetCmsCanvasHist(canvas).GetZaxis().SetLabelSize(0.01)
+        CMS.GetCmsCanvasHist(canvas).GetZaxis().SetTitle("Events")
+        CMS.GetCmsCanvasHist(canvas).GetZaxis().CenterTitle(True)
+        #draw extra labels
+        self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.87)
+        #print("prelim_str",prelim_str)
+        x_pos = 0.425
+        if prelim_str == "Preliminary Simulation":
+            x_pos=0.525
+        if "SV" in final_state_label and "gamma" in final_state_label:
+            x_pos=0.4
+        # Use style manager to handle complex label rendering
+        latex_objects = self._plotter2D._draw_region_label(canvas, final_state_label, x_pos)
         return canvas
  
     def get_hist_process(self, hist): 
@@ -389,7 +479,7 @@ class PlotFormatter():
     def format_1d_hist(self, name, sample_label, hist, var_label, color, style, xmin, xmax, normalize = False, logy=False, sample_label_x_pos = 0.65):
         self.format_hist_1d_base(hist, color, style, normalize=normalize)
         #do canvas
-        can = self._plotter1d._initialize_canvas(name, xmin, xmax, var_label)	
+        can = self._plotter1d._initialize_canvas(name, xmin, xmax, var_label)   
         if logy:
             can.SetLogy()
         
@@ -400,9 +490,9 @@ class PlotFormatter():
         #add histograms after dereferencing
         proc = self.get_hist_process(hist)
         if "MET" not in proc:
-        	prelim_str = "Simulation"
+            prelim_str = "Simulation"
         else:
-        	prelim_str = "Preliminary"
+            prelim_str = "Preliminary"
         self._styler.draw_cms_labels(prelim_str=prelim_str)#cms_x=0.16, cms_y=0.93, prelim_str="Preliminary", prelim_x=0.235, lumi_x=0.75, cms_text_size_mult=1.25)
         self._styler.draw_process_label(sample_label, x_pos=sample_label_x_pos, y_pos=0.88)
         return can
@@ -416,7 +506,7 @@ class PlotFormatter():
         xmin = hists[0].GetXaxis().GetXmin()
         xmax = hists[0].GetXaxis().GetXmax()
         #do canvas
-        can = self._plotter1d._initialize_canvas(name, xmin, xmax, x_label)	
+        can = self._plotter1d._initialize_canvas(name, xmin, xmax, x_label) 
         if logy:
             can.SetLogy()
 
@@ -425,7 +515,11 @@ class PlotFormatter():
         for idx, hist in enumerate(hists):
             sample_label = hist.GetName()
             sample_label = sample_label[sample_label.find(var_label+"_")+len(var_label)+1:]
-            sample_label = sample_label[:sample_label.find("_")] 
+            sample_label = sample_label[:sample_label.find("_")]
+            if "PD" in sample_label:
+                sample_label = "Data"
+                region = hist.GetName().split("_")[2]
+                sample_label = f"Data, {region_dict[region]}"
             if "SMS" in hist.GetName():
                 sample_label = get_signal_label(sample_label)
             legend_entries.append({'object': hist, 'label': sample_label, 'option': 'l'})
@@ -613,7 +707,7 @@ class PlotFormatter():
         # Create and add MC uncertainty band using helper
         mc_histograms_labeled = []
         for hist in mc_histograms:
-            print(hist.GetName(), hist.Integral())
+            #print(hist.GetName(), hist.Integral())
             bgname = self.get_hist_process(hist)
             color = self._helper._get_background_color_index(bgname)
             self.format_stack_mc_hist(hist, color)
@@ -797,13 +891,13 @@ class PlotFormatter():
         binning_scheme["total_bins"] = nbins
         binning_scheme["group_label_y_position"] = 0.87
         binning_scheme["group_widths"] = [len(xb) for xb in xbins_grouped]
-        print("totalbins",totalbins,"separator_bins",binning_scheme["separator_bins"],"group_widths",binning_scheme["group_widths"])
+        #print("totalbins",totalbins,"separator_bins",binning_scheme["separator_bins"],"group_widths",binning_scheme["group_widths"])
        
         
         # Find maximum for proper scaling
         max_val = max(hist.GetMaximum() for hist in histograms)
         max_norm = max(hist.Integral() for hist in histograms)
-        print("max_norm",max_norm)
+        #print("max_norm",max_norm)
         yaxistitle = "events"
         if(max_norm == 1):
             yaxistitle = "normalized events"
@@ -941,7 +1035,7 @@ class PlotFormatter():
         #draw grouped (yaxis) labels
         group_labels = []
         for l in ybins:
-            print("ylabel",l)
+            #print("ylabel",l)
             label = ylabel + " #in " +interval_to_label(l)
             group_labels.append(label)
         text_objects = unroll_maker.add_group_labels(canvas, group_labels, binning_scheme=binning_scheme)
